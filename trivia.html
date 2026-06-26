@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Dr. Hemenway's 80th — Trivia (Sample)</title>
+<style>
+/* ============================================================
+   TIME BANDIT look — 45deg clipped octagons, 145deg metallic
+   gradients, "1px less" nested frames. No border-radius.
+   (Reused from the party-games shell.)
+   ============================================================ */
+:root,[data-theme="dark"]{
+  --purple-dark:#2d1b5e;--purple:#4a2c7a;--purple-mid:#7c3aed;--purple-light:#9c6eff;
+  --gold:#f5c518;--gold-light:#ffe066;--gold-dark:#d4a017;
+  --bg:#0e0b18;--bg2:#16102a;--bg3:#1f1640;--border:#2d1b5e;
+  --text:#e8e0ff;--text-dim:#9080c0;--text-muted:#5a4a8a;
+  --success:#22c55e;--warn:#f59e0b;--error:#ef4444;
+  --metal:linear-gradient(145deg,#e8e8e8 0%,#b0b0b0 30%,#787878 70%,#b8b8b8 100%);
+  --frame-border:linear-gradient(145deg,#9c6eff 0%,#4a2c7a 50%,#2d1b5e 100%);
+  --shadow:rgba(0,0,0,0.5);
+}
+[data-theme="day"]{
+  --purple-dark:#5b3aa6;--purple:#6f47c9;--purple-mid:#7c3aed;--purple-light:#9c6eff;
+  --gold:#e0a500;--gold-light:#ffd54a;--gold-dark:#b07d00;
+  --bg:#f4f0fb;--bg2:#ffffff;--bg3:#ece5fb;--border:#c9b8f0;
+  --text:#241a3a;--text-dim:#5a4a8a;--text-muted:#9080c0;
+  --success:#15803d;--warn:#b45309;--error:#b91c1c;
+  --metal:linear-gradient(145deg,#ffffff 0%,#d8d8d8 30%,#a8a8a8 70%,#e8e8e8 100%);
+  --frame-border:linear-gradient(145deg,#b79cff 0%,#9c6eff 50%,#7c3aed 100%);
+  --shadow:rgba(90,70,160,0.18);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;line-height:1.5;min-height:100vh;
+  padding:18px 16px 60px;max-width:640px;margin:0 auto;transition:background .3s,color .3s;}
+h1,h2,h3{letter-spacing:.02em;line-height:1.15;}
+.dim{color:var(--text-dim);}.muted{color:var(--text-muted);}.center{text-align:center;}
+.oct-18{clip-path:polygon(18px 0,calc(100% - 18px) 0,100% 18px,100% calc(100% - 18px),calc(100% - 18px) 100%,18px 100%,0 calc(100% - 18px),0 18px);}
+.oct-12{clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px);}
+.oct-10{clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px);}
+.oct-9{clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);}
+.oct-8{clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;}
+.brand{font-size:.72rem;text-transform:uppercase;letter-spacing:.18em;color:var(--text-muted);font-weight:700;}
+.theme-toggle{background:var(--metal);padding:2px;cursor:pointer;}
+.theme-toggle .inner{background:var(--bg2);color:var(--text);border:none;cursor:pointer;
+  padding:7px 14px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
+.hero{text-align:center;margin-bottom:14px;}
+.hero .kicker{color:var(--gold);font-weight:800;letter-spacing:.22em;text-transform:uppercase;font-size:.72rem;}
+.hero h1{font-size:2rem;margin:6px 0 4px;}
+.hero h1 .age{color:var(--gold);}
+.hero p{color:var(--text-dim);font-size:1rem;max-width:34ch;margin:0 auto;}
+.frame{background:var(--frame-border);padding:3px;position:relative;display:block;margin:16px 0;}
+.frame::after{content:'';position:absolute;inset:3px;background:var(--bg2);z-index:0;pointer-events:none;
+  clip-path:polygon(17px 0,calc(100% - 17px) 0,100% 17px,100% calc(100% - 17px),calc(100% - 17px) 100%,17px 100%,0 calc(100% - 17px),0 17px);}
+.frame>.body{position:relative;z-index:1;padding:20px;}
+.frame--gold{background:linear-gradient(145deg,#fde047 0%,#f5c518 40%,#92400e 100%);}
+/* buttons */
+.btn-frame{display:block;width:100%;background:var(--metal);padding:2px;cursor:pointer;transition:filter .15s;margin-top:14px;}
+.btn-frame:hover{filter:brightness(1.08);}.btn-frame:active{filter:brightness(.95);}
+.btn{width:100%;border:none;cursor:pointer;padding:13px 22px;font-size:.9rem;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;color:#1a0a00;
+  background:linear-gradient(160deg,#ffe066 0%,#f5c518 40%,#d4a017 100%);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(0,0,0,.25);}
+.btn:disabled{filter:grayscale(.6) brightness(.8);cursor:not-allowed;}
+.btn:active{transform:scale(.98);}
+.back{background:none;border:none;color:var(--text-dim);font-size:.82rem;cursor:pointer;padding:4px 0;margin-bottom:6px;}
+.screen{display:none;}.screen.active{display:block;}
+footer{text-align:center;margin-top:30px;font-size:.72rem;color:var(--text-muted);}
+/* ---- progress ---- */
+.prog{text-align:center;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin:4px 0 18px;}
+.prog b{color:var(--gold);}
+.sample-note{text-align:center;font-size:.72rem;color:var(--text-muted);margin-bottom:14px;font-style:italic;}
+/* ---- question grid ---- */
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.qtile{background:var(--frame-border);padding:2.5px;cursor:pointer;transition:filter .15s,transform .1s;position:relative;}
+.qtile:hover{filter:brightness(1.08);}.qtile:active{transform:scale(.98);}
+.qtile .in{background:var(--bg2);padding:14px 13px 16px;min-height:118px;display:flex;flex-direction:column;
+  clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 15px,100% calc(100% - 15px),calc(100% - 15px) 100%,15px 100%,0 calc(100% - 15px),0 15px);}
+.qtile.done{background:linear-gradient(145deg,#86efac,#22c55e 45%,#15803d);}
+.qtile .stag{display:inline-block;align-self:flex-start;font-size:.6rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  color:#1a0a00;background:linear-gradient(160deg,#ffe066,#f5c518 40%,#d4a017);padding:2px 8px;margin-bottom:9px;
+  clip-path:polygon(4px 0,calc(100% - 4px) 0,100% 4px,100% calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,0 calc(100% - 4px),0 4px);}
+.qtile .qt{font-size:.86rem;font-weight:600;color:var(--text);line-height:1.25;}
+.qtile .chk{position:absolute;top:8px;right:9px;font-size:.7rem;font-weight:800;color:#0a3d18;display:none;letter-spacing:.04em;}
+.qtile.done .chk{display:block;}
+.qtile.done .stag{background:rgba(255,255,255,.85);}
+.qtile.done .qt{color:#0a2a12;}
+/* ---- question screen ---- */
+.qhead{font-size:1.25rem;font-weight:700;margin-bottom:4px;}
+.qsub{color:var(--text-dim);font-size:.86rem;margin-bottom:8px;}
+/* options (pick one / pick all) */
+.opt{display:block;width:100%;background:var(--border);padding:2px;cursor:pointer;margin-top:10px;transition:filter .12s;}
+.opt:hover{filter:brightness(1.12);}
+.opt .oin{background:var(--bg3);color:var(--text);padding:13px 15px;font-size:.96rem;font-weight:600;display:flex;align-items:center;gap:10px;
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);}
+.opt .box{width:20px;height:20px;flex:0 0 20px;border:2px solid var(--text-muted);display:inline-block;}
+.opt.pickone .box{clip-path:circle(50%);}
+.opt.sel{background:linear-gradient(145deg,#86efac,#22c55e 45%,#15803d);}
+.opt.sel .oin{color:#06280f;background:transparent;font-weight:800;}
+.opt.sel .box{border-color:#06280f;background:#06280f;}
+/* slider */
+.slid-val{text-align:center;margin:20px 0 4px;}
+.slid-val .num{font-size:3.4rem;font-weight:800;color:var(--gold);line-height:1;}
+.slid-val .unit{display:block;font-size:.8rem;text-transform:uppercase;letter-spacing:.14em;color:var(--text-dim);margin-top:4px;}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:10px;background:var(--bg3);outline:none;margin:18px 0 6px;
+  clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:30px;height:30px;cursor:pointer;
+  background:linear-gradient(160deg,#ffe066,#f5c518 45%,#d4a017);box-shadow:0 0 0 3px var(--bg2),0 2px 6px rgba(0,0,0,.5);}
+input[type=range]::-moz-range-thumb{width:30px;height:30px;border:none;cursor:pointer;
+  background:linear-gradient(160deg,#ffe066,#f5c518 45%,#d4a017);box-shadow:0 0 0 3px var(--bg2);}
+.slid-ends{display:flex;justify-content:space-between;font-size:.74rem;color:var(--text-muted);font-weight:700;}
+/* matching */
+.match-hint{font-size:.78rem;color:var(--text-muted);margin:6px 0 12px;}
+.mrow{display:flex;align-items:stretch;gap:10px;margin-top:10px;}
+.mleft{flex:1;background:var(--border);padding:2px;cursor:pointer;}
+.mleft .lin{background:var(--bg3);padding:11px 12px;font-size:.9rem;font-weight:700;
+  clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);}
+.mleft.active{background:var(--metal);}
+.mleft.active .lin{background:var(--purple);color:#fff;}
+.mleft .assigned{display:block;font-size:.74rem;font-weight:600;color:var(--gold);margin-top:3px;}
+.mleft.has .lin{background:linear-gradient(145deg,#86efac,#22c55e 45%,#15803d);color:#06280f;}
+.mleft.has .assigned{color:#06280f;}
+.mright-wrap{margin-top:14px;}
+.mright-lab{font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);font-weight:700;margin-bottom:6px;}
+.mright{display:inline-block;background:var(--border);padding:2px;cursor:pointer;margin:0 8px 8px 0;}
+.mright .rin{background:var(--bg3);padding:9px 13px;font-size:.86rem;font-weight:600;
+  clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px);}
+.mright.used{opacity:.35;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">Time Bandit Entertainment</div>
+  <span class="theme-toggle oct-8" onclick="toggleTheme()"><button class="inner oct-8" id="themeBtn">Daylight</button></span>
+</div>
+
+<!-- ============ GRID / HOME ============ -->
+<section class="screen active" id="screen-grid">
+  <div class="hero">
+    <div class="kicker">Birthday Trivia · Sample</div>
+    <h1>Dr. Hemenway's <span class="age">80th</span></h1>
+    <p>Tap any question, in any order. Answer the ones you know — skip around all you like.</p>
+  </div>
+  <div class="prog" id="prog">Answered <b id="adone">0</b> of <b id="atot">0</b></div>
+  <div class="sample-note">Sample layout for review — points and winners come later.</div>
+  <div class="qgrid" id="qgrid"></div>
+  <footer>A taste of the night · Dr. Merritt Hemenway's 80th &amp; Retirement</footer>
+</section>
+
+<!-- ============ QUESTION ============ -->
+<section class="screen" id="screen-q">
+  <button class="back" onclick="toGrid()">&lsaquo; All questions</button>
+  <div class="frame oct-18"><div class="body" id="qbody"><!-- built --></div></div>
+  <span class="btn-frame oct-10"><button class="btn oct-9" id="saveBtn" onclick="saveQ()">Save Answer</button></span>
+</section>
+
+<script>
+/* ---------- theme ---------- */
+function toggleTheme(){
+  const r=document.documentElement,day=r.getAttribute('data-theme')==='day';
+  r.setAttribute('data-theme',day?'dark':'day');
+  document.getElementById('themeBtn').textContent=day?'Daylight':'Dark';
+  try{localStorage.setItem('tb_theme',day?'dark':'day')}catch(e){}
+}
+(function(){try{const t=localStorage.getItem('tb_theme');if(t){document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('themeBtn').textContent=t==='day'?'Dark':'Daylight';}}catch(e){}})();
+
+/* ---------- the sample question set (about half the list, mixed styles) ---------- */
+const TAG={slider:'Slide',choice:'Pick One',select:'Pick All',match:'Match'};
+const QS=[
+ {type:'slider',tile:'Years to finish his PhD?',
+  q:'How many years did it take Merritt to finish his PhD?',sub:'From acceptance to completion.',
+  min:0,max:25,start:5,unit:'years'},
+ {type:'choice',tile:'Who led the quadruple bypass?',
+  q:'Who led Merritt’s quadruple bypass surgery?',
+  options:['Dr. Wong','Dr. Pong','Dr. Sami Hayack','Dr. Reyes']},
+ {type:'slider',tile:'How many movies has he been in?',
+  q:'How many full-length movies has Merritt appeared in?',sub:'',
+  min:0,max:10,start:3,unit:'movies'},
+ {type:'select',tile:'Which schools had televised announcements?',
+  q:'Which schools had televised Kairos announcements?',sub:'Pick all that apply.',
+  options:['Bishop Amat','CSHM','Santa Margarita','Damien','Cantwell']},
+ {type:'choice',tile:'Who gave the Lead, Learn, Proclaim award?',
+  q:'The Lead, Learn, Proclaim Award Merritt won was given by which institution?',
+  options:['National Catholic Education Association','Diocese of Los Angeles','U.S. Department of Education','National Honor Society']},
+ {type:'slider',tile:'Seniors on his first Kairos?',
+  q:'How many seniors were on Merritt’s very first Kairos retreat?',sub:'',
+  min:0,max:30,start:8,unit:'seniors'},
+ {type:'choice',tile:'Where were Kairos 1-2-3 held?',
+  q:'Where were Kairos retreats 1, 2, and 3 held?',
+  options:['Mission San Luis Rey, Oceanside','Mission San Juan Capistrano','Santa Margarita Retreat House','Big Bear Lodge']},
+ {type:'match',tile:'Match the people to their roles',
+  q:'Match each person to their role in Merritt’s life.',
+  left:['Dr. Wong','Dr. Sami Hayack','Dr. David Drew'],
+  right:['Led the bypass','His cardiologist','Favorite teacher']}
+];
+
+const answers={}; // index -> answer payload
+let cur=-1, draft=null;
+
+/* ---------- grid ---------- */
+function renderGrid(){
+  const g=document.getElementById('qgrid');g.innerHTML='';
+  QS.forEach((q,i)=>{
+    const done=answers[i]!==undefined;
+    const el=document.createElement('div');
+    el.className='qtile oct-18'+(done?' done':'');
+    el.onclick=()=>openQ(i);
+    el.innerHTML='<div class="in"><span class="stag">'+TAG[q.type]+'</span>'
+      +'<span class="chk">✓ Answered</span>'
+      +'<div class="qt">'+q.tile+'</div></div>';
+    g.appendChild(el);
+  });
+  document.getElementById('atot').textContent=QS.length;
+  document.getElementById('adone').textContent=Object.keys(answers).length;
+}
+function toGrid(){document.getElementById('screen-q').classList.remove('active');
+  document.getElementById('screen-grid').classList.add('active');renderGrid();window.scrollTo(0,0);}
+
+/* ---------- open a question ---------- */
+function openQ(i){
+  cur=i;draft=null;const q=QS[i];const b=document.getElementById('qbody');
+  let h='<div class="qhead">'+q.q+'</div>';
+  if(q.sub)h+='<div class="qsub">'+q.sub+'</div>';
+  if(q.type==='slider'){
+    const v=answers[i]!==undefined?answers[i]:q.start;draft=v;
+    h+='<div class="slid-val"><span class="num" id="sv">'+v+'</span><span class="unit">'+q.unit+'</span></div>';
+    h+='<input type="range" min="'+q.min+'" max="'+q.max+'" value="'+v+'" oninput="onSlide(this.value)" />';
+    h+='<div class="slid-ends"><span>'+q.min+'</span><span>'+q.max+'</span></div>';
+  }
+  else if(q.type==='choice'){
+    const sel=answers[i];
+    q.options.forEach((o,k)=>{
+      h+='<div class="opt pickone'+(sel===k?' sel':'')+'" onclick="pickOne('+k+')"><div class="oin oct-8"><span class="box"></span>'+o+'</div></div>';
+    });
+    if(sel!==undefined)draft=sel;
+  }
+  else if(q.type==='select'){
+    const sel=answers[i]||[];
+    q.options.forEach((o,k)=>{
+      h+='<div class="opt'+(sel.indexOf(k)>-1?' sel':'')+'" onclick="toggleSel('+k+')"><div class="oin oct-8"><span class="box"></span>'+o+'</div></div>';
+    });
+    draft=sel.slice();
+  }
+  else if(q.type==='match'){
+    const pairs=answers[i]?Object.assign({},answers[i]):{};draft=pairs;
+    h+='<div class="match-hint">Tap a name, then tap its match below.</div><div id="mleftwrap"></div>';
+    h+='<div class="mright-wrap"><div class="mright-lab">Roles</div><div id="mrightwrap"></div></div>';
+  }
+  b.innerHTML=h;
+  if(q.type==='match')renderMatch();
+  updateSaveBtn();
+  document.getElementById('screen-grid').classList.remove('active');
+  document.getElementById('screen-q').classList.add('active');window.scrollTo(0,0);
+}
+
+/* ---------- slider ---------- */
+function onSlide(v){draft=parseInt(v,10);document.getElementById('sv').textContent=v;updateSaveBtn();}
+
+/* ---------- pick one ---------- */
+function pickOne(k){draft=k;
+  document.querySelectorAll('#qbody .opt').forEach((el,idx)=>el.classList.toggle('sel',idx===k));
+  updateSaveBtn();}
+
+/* ---------- select all ---------- */
+function toggleSel(k){if(!Array.isArray(draft))draft=[];
+  const p=draft.indexOf(k);if(p>-1)draft.splice(p,1);else draft.push(k);
+  document.querySelectorAll('#qbody .opt')[k].classList.toggle('sel',draft.indexOf(k)>-1);
+  updateSaveBtn();}
+
+/* ---------- matching ---------- */
+let mActive=null;
+function renderMatch(){
+  const q=QS[cur];
+  const lw=document.getElementById('mleftwrap');lw.innerHTML='';
+  q.left.forEach((name,li)=>{
+    const assignedIdx=draft[li];
+    const has=assignedIdx!==undefined&&assignedIdx!==null;
+    const row=document.createElement('div');
+    row.className='mrow';
+    row.innerHTML='<div class="mleft'+(mActive===li?' active':'')+(has?' has':'')+'" onclick="pickLeft('+li+')">'
+      +'<div class="lin oct-8">'+name
+      +(has?'<span class="assigned">→ '+q.right[assignedIdx]+'</span>':'<span class="assigned" style="opacity:.6">tap to match</span>')
+      +'</div></div>';
+    lw.appendChild(row);
+  });
+  const rw=document.getElementById('mrightwrap');rw.innerHTML='';
+  const usedIdx=Object.values(draft);
+  q.right.forEach((r,ri)=>{
+    const used=usedIdx.indexOf(ri)>-1;
+    const el=document.createElement('div');
+    el.className='mright'+(used?' used':'');
+    el.onclick=()=>pickRight(ri);
+    el.innerHTML='<div class="rin">'+r+'</div>';
+    rw.appendChild(el);
+  });
+  updateSaveBtn();
+}
+function pickLeft(li){mActive=(mActive===li?null:li);renderMatch();}
+function pickRight(ri){
+  if(mActive===null){return;}
+  // remove this right from any other left, then assign to active
+  for(const k in draft){if(draft[k]===ri)delete draft[k];}
+  draft[mActive]=ri;mActive=null;renderMatch();
+}
+
+/* ---------- save enable + commit ---------- */
+function updateSaveBtn(){
+  const q=QS[cur];let ok=false;
+  if(q.type==='slider')ok=draft!==null&&draft!==undefined;
+  else if(q.type==='choice')ok=draft!==null&&draft!==undefined;
+  else if(q.type==='select')ok=Array.isArray(draft)&&draft.length>0;
+  else if(q.type==='match')ok=Object.keys(draft).length===q.left.length;
+  document.getElementById('saveBtn').disabled=!ok;
+}
+function saveQ(){
+  const q=QS[cur];
+  if(q.type==='select')answers[cur]=draft.slice();
+  else if(q.type==='match')answers[cur]=Object.assign({},draft);
+  else answers[cur]=draft;
+  toGrid();
+}
+
+renderGrid();
+</script>
+</body>
+</html>

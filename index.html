@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Dr. Hemenway's 80th — Game Previews</title>
+<style>
+:root,[data-theme="dark"]{
+  --gold:#f5c518;--bg:#0e0b18;--bg2:#16102a;--bg3:#1f1640;--border:#2d1b5e;
+  --text:#e8e0ff;--text-dim:#9080c0;--text-muted:#5a4a8a;
+  --metal:linear-gradient(145deg,#e8e8e8 0%,#b0b0b0 30%,#787878 70%,#b8b8b8 100%);
+  --frame-border:linear-gradient(145deg,#9c6eff 0%,#4a2c7a 50%,#2d1b5e 100%);
+}
+[data-theme="day"]{--gold:#e0a500;--bg:#f4f0fb;--bg2:#ffffff;--bg3:#ece5fb;--border:#c9b8f0;
+  --text:#241a3a;--text-dim:#5a4a8a;--text-muted:#9080c0;
+  --metal:linear-gradient(145deg,#ffffff 0%,#d8d8d8 30%,#a8a8a8 70%,#e8e8e8 100%);
+  --frame-border:linear-gradient(145deg,#b79cff 0%,#9c6eff 50%,#7c3aed 100%);}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;line-height:1.5;min-height:100vh;
+  padding:20px 16px 60px;max-width:600px;margin:0 auto;}
+.oct-18{clip-path:polygon(18px 0,calc(100% - 18px) 0,100% 18px,100% calc(100% - 18px),calc(100% - 18px) 100%,18px 100%,0 calc(100% - 18px),0 18px);}
+.oct-8{clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.brand{font-size:.72rem;text-transform:uppercase;letter-spacing:.18em;color:var(--text-muted);font-weight:700;}
+.theme-toggle{background:var(--metal);padding:2px;cursor:pointer;}
+.theme-toggle .inner{background:var(--bg2);color:var(--text);border:none;cursor:pointer;
+  padding:7px 14px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
+.hero{text-align:center;margin-bottom:8px;}
+.hero .kicker{color:var(--gold);font-weight:800;letter-spacing:.22em;text-transform:uppercase;font-size:.72rem;}
+.hero h1{font-size:2rem;margin:6px 0 4px;}
+.hero h1 .age{color:var(--gold);}
+.hero p{color:var(--text-dim);font-size:1rem;max-width:34ch;margin:0 auto;}
+.note{text-align:center;font-size:.74rem;color:var(--text-muted);font-style:italic;margin:10px 0 4px;}
+.frame{background:var(--frame-border);padding:3px;position:relative;display:block;margin:16px 0;text-decoration:none;color:inherit;
+  transition:filter .15s,transform .1s;}
+.frame:hover{filter:brightness(1.07);}.frame:active{transform:scale(.99);}
+.frame::after{content:'';position:absolute;inset:3px;background:var(--bg2);z-index:0;pointer-events:none;
+  clip-path:polygon(17px 0,calc(100% - 17px) 0,100% 17px,100% calc(100% - 17px),calc(100% - 17px) 100%,17px 100%,0 calc(100% - 17px),0 17px);}
+.frame>.body{position:relative;z-index:1;padding:20px;}
+.tag{display:inline-block;font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#1a0a00;
+  background:linear-gradient(160deg,#ffe066,#f5c518 40%,#d4a017);padding:3px 10px;margin-bottom:10px;
+  clip-path:polygon(5px 0,calc(100% - 5px) 0,100% 5px,100% calc(100% - 5px),calc(100% - 5px) 100%,5px 100%,0 calc(100% - 5px),0 5px);}
+.frame h3{font-size:1.3rem;margin-bottom:6px;}
+.frame p{color:var(--text-dim);font-size:.95rem;}
+.play{margin-top:14px;color:var(--gold);font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:.8rem;}
+footer{text-align:center;margin-top:30px;font-size:.72rem;color:var(--text-muted);}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">Time Bandit Entertainment</div>
+  <span class="theme-toggle oct-8" onclick="toggleTheme()"><button class="inner oct-8" id="themeBtn">Daylight</button></span>
+</div>
+<div class="hero">
+  <div class="kicker">Game Previews</div>
+  <h1>Dr. Hemenway's <span class="age">80th</span></h1>
+  <p>Two rough layouts to look over. Tap to try each one.</p>
+</div>
+<div class="note">Work in progress — points, winners, and the rest get added later.</div>
+
+<a class="frame oct-18" href="trivia.html">
+  <div class="body">
+    <span class="tag">Sample 1</span>
+    <h3>Birthday Trivia</h3>
+    <p>A mix of question styles — slide to a number, pick one, pick all, and match. Answer in any order.</p>
+    <div class="play">Open the trivia sample &rsaquo;</div>
+  </div>
+</a>
+
+<a class="frame oct-18" href="bingo.html">
+  <div class="body">
+    <span class="tag">Sample 2</span>
+    <h3>Social Bingo</h3>
+    <p>A 5x5 card of octagon squares, shuffled for each player. Tap a square to read it, tap again to log who you met.</p>
+    <div class="play">Open the bingo sample &rsaquo;</div>
+  </div>
+</a>
+
+<footer>Dr. Merritt Hemenway's 80th &amp; Retirement · Time Bandit Entertainment</footer>
+<script>
+function toggleTheme(){const r=document.documentElement,day=r.getAttribute('data-theme')==='day';
+  r.setAttribute('data-theme',day?'dark':'day');document.getElementById('themeBtn').textContent=day?'Daylight':'Dark';
+  try{localStorage.setItem('tb_theme',day?'dark':'day')}catch(e){}}
+(function(){try{const t=localStorage.getItem('tb_theme');if(t){document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('themeBtn').textContent=t==='day'?'Dark':'Daylight';}}catch(e){}})();
+</script>
+</body>
+</html>
