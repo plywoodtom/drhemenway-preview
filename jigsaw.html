@@ -26,7 +26,7 @@
 .boardguide .ghost{position:absolute;inset:0;opacity:.12;background-size:cover;background-position:center;}
 .piece{position:absolute;pointer-events:none;}
 .piece svg{display:block;width:100%;height:100%;overflow:visible;}
-.hit{pointer-events:auto;cursor:grab;}
+.hit{pointer-events:all;cursor:grab;}
 .piece.locked .hit{cursor:default;pointer-events:none;}
 /* zoom controls */
 .zc{position:absolute;top:8px;right:8px;z-index:20;display:flex;flex-direction:column;gap:4px;}
@@ -130,14 +130,16 @@ const world=()=>document.getElementById('world');
 function setDiff(n){N=n;document.querySelectorAll('.diff button').forEach(b=>b.classList.toggle('on',+b.dataset.n===n));build();}
 
 function build(){
+  const st=stage();
+  if(!st||st.clientWidth<60||st.clientHeight<60){requestAnimationFrame(build);return;} // wait for layout
   solved=false;document.getElementById('win').classList.remove('show');
-  const st=stage();const sw=st.clientWidth,sh=st.clientHeight;
+  const sw=st.clientWidth,sh=st.clientHeight;
   // board sized to a portion of the stage
   boardW=Math.min(sw*0.62, sh*0.62*imgRatio, 360);
   boardH=boardW/imgRatio;
   pieceW=boardW/N;pieceH=boardH/N;PAD=Math.max(pieceW,pieceH);
   // world is bigger than the board so pieces have room around it
-  const mx=Math.max(pieceW*1.7, sw*0.5), my=Math.max(pieceH*1.7, sh*0.5);
+  const mx=Math.max(pieceW*2.3, sw*0.55), my=Math.max(pieceH*2.3, sh*0.55);
   worldW=boardW+mx*2;worldH=boardH+my*2;boardX=mx;boardY=my;
   const w=world();w.style.width=worldW+'px';w.style.height=worldH+'px';w.innerHTML='';
   // board guide
@@ -160,23 +162,32 @@ function build(){
       +'<path class="hit" data-id="'+p.id+'" d="'+p.path+'" fill="transparent"/>'
       +'<path d="'+p.path+'" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="0.6" style="pointer-events:none"/></svg>';
     w.appendChild(el);
-    placePiece(p, scatterPos());
   });
+  scatterAll(false);
   document.getElementById('cnt').textContent='0';
   fitView();resetTimer();
 }
 function placePiece(p,cx,cy){p.cx=cx;p.cy=cy;const el=document.getElementById('pc'+p.id);
   el.style.left=(cx-PAD)+'px';el.style.top=(cy-PAD)+'px';}
-function scatterPos(){
-  for(let i=0;i<80;i++){
-    const x=pieceW*0.5+Math.random()*(worldW-pieceW);
-    const y=pieceH*0.5+Math.random()*(worldH-pieceH);
-    const onBoard=(x+pieceW*0.5>boardX-6&&x-pieceW*0.5<boardX+boardW+6&&y+pieceH*0.5>boardY-6&&y-pieceH*0.5<boardY+boardH+6);
-    if(!onBoard)return{x,y};
-  }
-  return{x:pieceW,y:pieceH};
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+/* place pieces spread out in a jittered grid AROUND the board (no big stacks) */
+function scatterAll(onlyUnlocked){
+  const list=onlyUnlocked?pieces.filter(p=>!p.locked):pieces;
+  const s=Math.max(pieceW,pieceH)*1.12;
+  const cells=[];
+  for(let y=pieceH*0.6; y<=worldH-pieceH*0.6; y+=s)
+    for(let x=pieceW*0.6; x<=worldW-pieceW*0.6; x+=s){
+      const onBoard=(x+pieceW*0.45>boardX&&x-pieceW*0.45<boardX+boardW&&y+pieceH*0.45>boardY&&y-pieceH*0.45<boardY+boardH);
+      if(!onBoard)cells.push({x,y});
+    }
+  shuf(cells);
+  list.forEach((p,i)=>{
+    const c=cells[i]||{x:pieceW+Math.random()*(worldW-2*pieceW),y:pieceH+Math.random()*(worldH-2*pieceH)};
+    const jx=(Math.random()-0.5)*s*0.22, jy=(Math.random()-0.5)*s*0.22;
+    placePiece(p,c.x+jx,c.y+jy);
+  });
 }
-function gather(){pieces.forEach(p=>{if(!p.locked)placePiece(p,scatterPos());});}
+function gather(){scatterAll(true);}
 
 /* transform */
 function applyT(){world().style.transform='translate('+panX+'px,'+panY+'px) scale('+zoom+')';}
