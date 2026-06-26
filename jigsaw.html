@@ -14,15 +14,30 @@
 .diff button.on{background:var(--accent);color:#fff;}
 .timer{font-size:.92rem;font-weight:800;color:var(--red-light);letter-spacing:.06em;}
 .refrow{display:flex;align-items:center;gap:10px;margin:6px 0 8px;}
-.refrow img{width:50px;height:auto;border:2px solid var(--border);}
-.refrow span{font-size:.74rem;color:var(--text-muted);}
-.play{position:relative;width:100%;overflow:visible;touch-action:none;margin-top:4px;}
-.boardguide{position:absolute;border:2px dashed var(--border);background-size:cover;background-position:center;opacity:1;}
-.boardguide .ghost{position:absolute;inset:0;opacity:.10;background-size:cover;background-position:center;}
+.refrow img{width:46px;height:auto;border:2px solid var(--border);}
+.refrow span{font-size:.72rem;color:var(--text-muted);}
+/* stage = fixed viewport; world is panned/zoomed inside it */
+.stage{position:relative;width:100%;height:clamp(360px,66vh,640px);background:var(--bg2);overflow:hidden;
+  border:3px solid var(--border);touch-action:none;cursor:grab;
+  clip-path:polygon(13px 0,calc(100% - 13px) 0,100% 13px,100% calc(100% - 13px),calc(100% - 13px) 100%,13px 100%,0 calc(100% - 13px),0 13px);}
+.stage.panning{cursor:grabbing;}
+.world{position:absolute;left:0;top:0;transform-origin:0 0;}
+.boardguide{position:absolute;border:2px dashed var(--red-light);opacity:.9;}
+.boardguide .ghost{position:absolute;inset:0;opacity:.12;background-size:cover;background-position:center;}
 .piece{position:absolute;pointer-events:none;}
 .piece svg{display:block;width:100%;height:100%;overflow:visible;}
 .hit{pointer-events:auto;cursor:grab;}
 .piece.locked .hit{cursor:default;pointer-events:none;}
+/* zoom controls */
+.zc{position:absolute;top:8px;right:8px;z-index:20;display:flex;flex-direction:column;gap:4px;}
+.zc button{width:38px;height:38px;border:1px solid var(--border);background:rgba(10,12,16,.72);color:#fff;font-size:1.2rem;font-weight:800;cursor:pointer;
+  clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);}
+.zc button:active{background:var(--accent);}
+.zc .lbl{font-size:.6rem;}
+.prog{position:absolute;top:8px;left:8px;z-index:20;background:rgba(10,12,16,.72);border:1px solid var(--border);padding:6px 10px;
+  font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#fff;
+  clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);}
+.prog b{color:var(--red-light);}
 .win-msg{display:none;text-align:center;margin-top:12px;font-size:1.05rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
   color:#fff;background:var(--accent);padding:12px;text-shadow:0 1px 3px rgba(0,0,0,.5);
   clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px);}
@@ -51,7 +66,7 @@
   <a href="jigsaw.html" class="on">Jigsaw</a>
   <a href="index.html">Menu</a>
 </nav>
-<p class="hsub">Drag the interlocking pieces into place. They snap when they're home.</p>
+<p class="hsub">Drag pieces into place. Pinch or use +/- to zoom, drag empty space to pan.</p>
 
 <div class="barrow">
   <div class="diff">
@@ -63,63 +78,52 @@
 </div>
 <div class="refrow"><img src="assets/heart.jpg" alt="reference" /><span>The finished picture, for reference.</span></div>
 
-<div class="play" id="play"></div>
+<div class="stage" id="stage">
+  <div class="prog">Placed <b id="cnt">0</b>/<b id="tot">9</b></div>
+  <div class="zc">
+    <button onclick="zoomStep(1.3)">+</button>
+    <button onclick="zoomStep(1/1.3)">&minus;</button>
+    <button onclick="fitView()" class="lbl">FIT</button>
+  </div>
+  <div class="world" id="world"></div>
+</div>
 <div class="win-msg" id="win">Solved! Beautifully done.</div>
-<div class="hint">Tip: the dashed box is where the picture goes. Drag a piece near its spot and it clicks in.</div>
+<div class="hint">All the pieces start spread around the board. Tap FIT to see them all, then zoom in to work.</div>
 
 <div class="row2">
   <span class="minibtn oct-8" onclick="build()"><span class="mi oct-8">Shuffle / New</span></span>
-  <span class="minibtn oct-8" onclick="solveDemo()"><span class="mi oct-8">Peek: auto-solve</span></span>
+  <span class="minibtn oct-8" onclick="gather()"><span class="mi oct-8">Gather pieces</span></span>
+  <span class="minibtn oct-8" onclick="solveDemo()"><span class="mi oct-8">Peek: solve</span></span>
 </div>
 
 <script src="assets/tb.js"></script>
 <script>
-/* ===== interlocking-piece geometry, ported from Caper lib/jigsaw.ts ===== */
+/* ===== interlocking geometry, ported from Caper lib/jigsaw.ts ===== */
 function generateJigsawGrid(rows,cols,width,height){
-  const pieces=[];const pw=width/cols,ph=height/rows;
-  const randomTab=()=>(Math.random()>0.5?1:-1);
+  const pieces=[];const pw=width/cols,ph=height/rows;const rt=()=>(Math.random()>0.5?1:-1);
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)
     pieces.push({id:r*cols+c,row:r,col:c,top:0,right:0,bottom:0,left:0,path:"",width:pw,height:ph,x:c*pw,y:r*ph});
-  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
-    const p=pieces[r*cols+c];
-    p.top = r===0?0:-pieces[(r-1)*cols+c].bottom;
-    p.left= c===0?0:-pieces[r*cols+(c-1)].right;
-    p.bottom = r===rows-1?0:randomTab();
-    p.right  = c===cols-1?0:randomTab();
-  }
-  for(const p of pieces)p.path=createPath(p,pw,ph);
-  return pieces;
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const p=pieces[r*cols+c];
+    p.top=r===0?0:-pieces[(r-1)*cols+c].bottom;p.left=c===0?0:-pieces[r*cols+(c-1)].right;
+    p.bottom=r===rows-1?0:rt();p.right=c===cols-1?0:rt();}
+  for(const p of pieces)p.path=cp(p,pw,ph);return pieces;
 }
-function createPath(piece,width,height){
-  const{top,right,bottom,left}=piece;let path=`M 0 0`;
-  path+= top===0?` L ${width} 0`:hCurve(width,top);
-  path+= right===0?` L ${width} ${height}`:vCurve(width,height,right);
-  path+= bottom===0?` L 0 ${height}`:hCurveBack(width,height,bottom);
-  path+= left===0?` L 0 0`:vCurveBack(height,left);
-  return path;
-}
-function hCurve(width,type){const w=width,h=-width*0.25*type;
-  return `l ${w*0.42} 0`+`c ${0} ${h*0.2}, ${-w*0.07} ${h*0.2}, ${-w*0.07} ${h*0.5}`
-    +`c ${0} ${h*0.4}, ${w*0.30} ${h*0.4}, ${w*0.30} 0`
-    +`c ${0} ${-h*0.3}, ${-w*0.07} ${-h*0.3}, ${-w*0.07} ${-h*0.5}`+`l ${w*0.42} 0`;}
-function hCurveBack(width,height,type){const w=-width,h=width*0.25*type;
-  return `l ${w*0.42} 0`+`c ${0} ${h*0.2}, ${-w*0.07} ${h*0.2}, ${-w*0.07} ${h*0.5}`
-    +`c ${0} ${h*0.4}, ${w*0.30} ${h*0.4}, ${w*0.30} 0`
-    +`c ${0} ${-h*0.3}, ${-w*0.07} ${-h*0.3}, ${-w*0.07} ${-h*0.5}`+`l ${w*0.42} 0`;}
-function vCurve(width,height,type){const w=height,h=height*0.25*type;
-  return `l 0 ${w*0.42}`+`c ${h*0.2} 0, ${h*0.2} ${-w*0.07}, ${h*0.5} ${-w*0.07}`
-    +`c ${h*0.4} 0, ${h*0.4} ${w*0.30}, 0 ${w*0.30}`
-    +`c ${-h*0.3} 0, ${-h*0.3} ${-w*0.07}, ${-h*0.5} ${-w*0.07}`+`l 0 ${w*0.42}`;}
-function vCurveBack(height,type){const w=-height,h=-height*0.25*type;
-  return `l 0 ${w*0.42}`+`c ${h*0.2} 0, ${h*0.2} ${-w*0.07}, ${h*0.5} ${-w*0.07}`
-    +`c ${h*0.4} 0, ${h*0.4} ${w*0.30}, 0 ${w*0.30}`
-    +`c ${-h*0.3} 0, ${-h*0.3} ${-w*0.07}, ${-h*0.5} ${-w*0.07}`+`l 0 ${w*0.42}`;}
+function cp(piece,w,h){const{top,right,bottom,left}=piece;let d=`M 0 0`;
+  d+=top===0?` L ${w} 0`:hC(w,top);d+=right===0?` L ${w} ${h}`:vC(w,h,right);
+  d+=bottom===0?` L 0 ${h}`:hCB(w,h,bottom);d+=left===0?` L 0 0`:vCB(h,left);return d;}
+function hC(width,type){const w=width,h=-width*0.25*type;return `l ${w*0.42} 0`+`c ${0} ${h*0.2}, ${-w*0.07} ${h*0.2}, ${-w*0.07} ${h*0.5}`+`c ${0} ${h*0.4}, ${w*0.30} ${h*0.4}, ${w*0.30} 0`+`c ${0} ${-h*0.3}, ${-w*0.07} ${-h*0.3}, ${-w*0.07} ${-h*0.5}`+`l ${w*0.42} 0`;}
+function hCB(width,height,type){const w=-width,h=width*0.25*type;return `l ${w*0.42} 0`+`c ${0} ${h*0.2}, ${-w*0.07} ${h*0.2}, ${-w*0.07} ${h*0.5}`+`c ${0} ${h*0.4}, ${w*0.30} ${h*0.4}, ${w*0.30} 0`+`c ${0} ${-h*0.3}, ${-w*0.07} ${-h*0.3}, ${-w*0.07} ${-h*0.5}`+`l ${w*0.42} 0`;}
+function vC(width,height,type){const w=height,h=height*0.25*type;return `l 0 ${w*0.42}`+`c ${h*0.2} 0, ${h*0.2} ${-w*0.07}, ${h*0.5} ${-w*0.07}`+`c ${h*0.4} 0, ${h*0.4} ${w*0.30}, 0 ${w*0.30}`+`c ${-h*0.3} 0, ${-h*0.3} ${-w*0.07}, ${-h*0.5} ${-w*0.07}`+`l 0 ${w*0.42}`;}
+function vCB(height,type){const w=-height,h=-height*0.25*type;return `l 0 ${w*0.42}`+`c ${h*0.2} 0, ${h*0.2} ${-w*0.07}, ${h*0.5} ${-w*0.07}`+`c ${h*0.4} 0, ${h*0.4} ${w*0.30}, 0 ${w*0.30}`+`c ${-h*0.3} 0, ${-h*0.3} ${-w*0.07}, ${-h*0.5} ${-w*0.07}`+`l 0 ${w*0.42}`;}
 
-/* ===== engine ===== */
+/* ===== engine with pan/zoom ===== */
 const IMG='assets/heart.jpg';
-let N=3,imgRatio=0.78,pieces=[],boardW=300,boardH=385,pieceW=100,pieceH=128,PAD=128;
-let boardX=0,boardY=0,band=120,solved=false,started=false,t0=0,timerInt=null;
-let drag=null;
+let N=3,imgRatio=0.78,pieces=[];
+let boardW=300,boardH=385,pieceW=100,pieceH=128,PAD=128,boardX=0,boardY=0,worldW=0,worldH=0;
+let zoom=1,panX=0,panY=0,minZoom=0.3;
+let solved=false,started=false,t0=0,timerInt=null;
+const stage=()=>document.getElementById('stage');
+const world=()=>document.getElementById('world');
 
 (function(){const im=new Image();im.onload=function(){imgRatio=im.naturalWidth/im.naturalHeight;build();};im.onerror=build;im.src=IMG;})();
 
@@ -127,100 +131,134 @@ function setDiff(n){N=n;document.querySelectorAll('.diff button').forEach(b=>b.c
 
 function build(){
   solved=false;document.getElementById('win').classList.remove('show');
-  const play=document.getElementById('play');
-  const cw=play.clientWidth||Math.min(window.innerWidth-28,572);
-  boardW=Math.min(cw-12,330);boardH=Math.round(boardW/imgRatio);
+  const st=stage();const sw=st.clientWidth,sh=st.clientHeight;
+  // board sized to a portion of the stage
+  boardW=Math.min(sw*0.62, sh*0.62*imgRatio, 360);
+  boardH=boardW/imgRatio;
   pieceW=boardW/N;pieceH=boardH/N;PAD=Math.max(pieceW,pieceH);
-  band=Math.round(pieceH+46);
-  boardX=Math.round((cw-boardW)/2);boardY=band;
-  const ch=boardH+band*2;
-  play.style.height=ch+'px';
+  // world is bigger than the board so pieces have room around it
+  const mx=Math.max(pieceW*1.7, sw*0.5), my=Math.max(pieceH*1.7, sh*0.5);
+  worldW=boardW+mx*2;worldH=boardH+my*2;boardX=mx;boardY=my;
+  const w=world();w.style.width=worldW+'px';w.style.height=worldH+'px';w.innerHTML='';
+  // board guide
+  const g=document.createElement('div');g.className='boardguide';
+  g.style.left=boardX+'px';g.style.top=boardY+'px';g.style.width=boardW+'px';g.style.height=boardH+'px';
+  g.innerHTML='<div class="ghost" style="background-image:url(\''+IMG+'\')"></div>';w.appendChild(g);
   pieces=generateJigsawGrid(N,N,boardW,boardH);
-  // build DOM
-  play.innerHTML='';
-  const guide=document.createElement('div');guide.className='boardguide';
-  guide.style.left=boardX+'px';guide.style.top=boardY+'px';guide.style.width=boardW+'px';guide.style.height=boardH+'px';
-  guide.innerHTML='<div class="ghost" style="background-image:url(\''+IMG+'\')"></div>';
-  play.appendChild(guide);
+  document.getElementById('tot').textContent=pieces.length;
   pieces.forEach(p=>{
     p.locked=false;
     const el=document.createElement('div');el.className='piece';el.id='pc'+p.id;
-    el.style.width=(pieceW+PAD*2)+'px';el.style.height=(pieceH+PAD*2)+'px';
-    el.style.zIndex=p.id+10;
-    el.innerHTML=
-      '<svg viewBox="'+(-PAD)+' '+(-PAD)+' '+(pieceW+PAD*2)+' '+(pieceH+PAD*2)+'">'
+    el.style.width=(pieceW+PAD*2)+'px';el.style.height=(pieceH+PAD*2)+'px';el.style.zIndex=p.id+10;
+    el.style.filter='drop-shadow(0 4px 6px rgba(0,0,0,0.45))';
+    el.innerHTML='<svg viewBox="'+(-PAD)+' '+(-PAD)+' '+(pieceW+PAD*2)+' '+(pieceH+PAD*2)+'">'
       +'<defs><clipPath id="clip'+p.id+'"><path d="'+p.path+'"/></clipPath></defs>'
       +'<g clip-path="url(#clip'+p.id+')">'
       +'<image href="'+IMG+'" x="'+(-p.x)+'" y="'+(-p.y)+'" width="'+boardW+'" height="'+boardH+'" preserveAspectRatio="none"/>'
       +'<path d="'+p.path+'" fill="none" stroke="#fff" stroke-width="2" stroke-opacity="0.45" transform="translate(-1,-1)" clip-path="url(#clip'+p.id+')"/>'
-      +'<path d="'+p.path+'" fill="none" stroke="#000" stroke-width="2" stroke-opacity="0.3" transform="translate(1,1)" clip-path="url(#clip'+p.id+')"/>'
-      +'</g>'
-      +'<path class="hit" d="'+p.path+'" fill="transparent"/>'
-      +'<path d="'+p.path+'" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="0.6" style="pointer-events:none"/>'
-      +'</svg>';
-    el.style.filter='drop-shadow(0 4px 6px rgba(0,0,0,0.45))';
-    play.appendChild(el);
-    // scatter
-    const pos=scatterPos();
-    setDivContent(p,pos.x,pos.y);
-    // wire drag
-    const hit=el.querySelector('.hit');
-    hit.addEventListener('pointerdown',e=>startDrag(e,p));
+      +'<path d="'+p.path+'" fill="none" stroke="#000" stroke-width="2" stroke-opacity="0.3" transform="translate(1,1)" clip-path="url(#clip'+p.id+')"/></g>'
+      +'<path class="hit" data-id="'+p.id+'" d="'+p.path+'" fill="transparent"/>'
+      +'<path d="'+p.path+'" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="0.6" style="pointer-events:none"/></svg>';
+    w.appendChild(el);
+    placePiece(p, scatterPos());
   });
-  resetTimer();
+  document.getElementById('cnt').textContent='0';
+  fitView();resetTimer();
 }
-function setDivContent(p,contentX,contentY){ // place so piece CONTENT origin sits at (contentX,contentY)
-  const el=document.getElementById('pc'+p.id);
-  el.style.left=(contentX-PAD)+'px';el.style.top=(contentY-PAD)+'px';
-  p.cx=contentX;p.cy=contentY;
-}
+function placePiece(p,cx,cy){p.cx=cx;p.cy=cy;const el=document.getElementById('pc'+p.id);
+  el.style.left=(cx-PAD)+'px';el.style.top=(cy-PAD)+'px';}
 function scatterPos(){
-  const play=document.getElementById('play');const cw=play.clientWidth,ch=parseInt(play.style.height);
-  for(let i=0;i<60;i++){
-    const x=4+Math.random()*(cw-pieceW-8);
-    const y=4+Math.random()*(ch-pieceH-8);
-    const overlapsBoard=(x+pieceW>boardX-6&&x<boardX+boardW+6&&y+pieceH>boardY-6&&y<boardY+boardH+6);
-    if(!overlapsBoard)return{x,y};
+  for(let i=0;i<80;i++){
+    const x=pieceW*0.5+Math.random()*(worldW-pieceW);
+    const y=pieceH*0.5+Math.random()*(worldH-pieceH);
+    const onBoard=(x+pieceW*0.5>boardX-6&&x-pieceW*0.5<boardX+boardW+6&&y+pieceH*0.5>boardY-6&&y-pieceH*0.5<boardY+boardH+6);
+    if(!onBoard)return{x,y};
   }
-  return{x:4+Math.random()*(cw-pieceW-8),y:4+Math.random()*(ch-pieceH-8)};
+  return{x:pieceW,y:pieceH};
+}
+function gather(){pieces.forEach(p=>{if(!p.locked)placePiece(p,scatterPos());});}
+
+/* transform */
+function applyT(){world().style.transform='translate('+panX+'px,'+panY+'px) scale('+zoom+')';}
+function fitView(){const st=stage();minZoom=Math.min(st.clientWidth/worldW, st.clientHeight/worldH);
+  zoom=minZoom*0.98;panX=(st.clientWidth-worldW*zoom)/2;panY=(st.clientHeight-worldH*zoom)/2;applyT();}
+function zoomStep(f){zoomAbout(f, stage().clientWidth/2, stage().clientHeight/2);}
+function zoomAbout(f, sx, sy){
+  const nz=Math.max(minZoom*0.9, Math.min(4, zoom*f));
+  // keep the world point under (sx,sy) fixed
+  const wx=(sx-panX)/zoom, wy=(sy-panY)/zoom;
+  zoom=nz;panX=sx-wx*zoom;panY=sy-wy*zoom;applyT();
 }
 
-/* drag */
-function startDrag(e,p){
-  if(p.locked||solved)return;e.preventDefault();
-  if(!started){started=true;t0=Date.now();timerInt=setInterval(tick,500);}
-  const el=document.getElementById('pc'+p.id);el.style.zIndex=1000;el.style.filter='drop-shadow(0 8px 12px rgba(0,0,0,0.6))';
-  drag={p,el,startX:e.clientX,startY:e.clientY,baseCx:p.cx,baseCy:p.cy};
-  window.addEventListener('pointermove',onMove);
-  window.addEventListener('pointerup',onUp);
+/* ===== pointer gestures: piece drag / pan / pinch ===== */
+const ptrs=new Map();let mode=null,dragP=null,dragBase=null,panBase=null,pinchBase=null;
+function stageRect(){return stage().getBoundingClientRect();}
+stageEl_init();
+function stageEl_init(){
+  const st=document.getElementById('stage');
+  st.addEventListener('pointerdown',onDown);
+  window.addEventListener('pointermove',onMove,{passive:false});
+  window.addEventListener('pointerup',onUp);window.addEventListener('pointercancel',onUp);
+}
+function onDown(e){
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===2){startPinch();return;}
+  if(ptrs.size>2)return;
+  const hit=e.target.closest && e.target.closest('.hit');
+  if(hit && !solved){
+    const id=+hit.dataset.id;const p=pieces[id];
+    if(p&&!p.locked){mode='piece';dragP=p;
+      if(!started){started=true;t0=Date.now();timerInt=setInterval(tick,500);}
+      const el=document.getElementById('pc'+id);el.style.zIndex=1000;el.style.filter='drop-shadow(0 9px 14px rgba(0,0,0,0.65))';
+      dragBase={cx:p.cx,cy:p.cy,sx:e.clientX,sy:e.clientY};return;}
+  }
+  mode='pan';panBase={panX,panY,sx:e.clientX,sy:e.clientY};stage().classList.add('panning');
 }
 function onMove(e){
-  if(!drag)return;
-  const dx=e.clientX-drag.startX,dy=e.clientY-drag.startY;
-  setDivContent(drag.p,drag.baseCx+dx,drag.baseCy+dy);
+  if(!ptrs.has(e.pointerId))return;
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(mode==='pinch'){doPinch();e.preventDefault();return;}
+  if(mode==='piece'&&dragP){e.preventDefault();
+    const dx=(e.clientX-dragBase.sx)/zoom, dy=(e.clientY-dragBase.sy)/zoom;
+    placePiece(dragP, dragBase.cx+dx, dragBase.cy+dy);return;}
+  if(mode==='pan'&&panBase){e.preventDefault();
+    panX=panBase.panX+(e.clientX-panBase.sx);panY=panBase.panY+(e.clientY-panBase.sy);applyT();return;}
 }
-function onUp(){
-  if(!drag)return;
-  const p=drag.p,el=drag.el;
-  window.removeEventListener('pointermove',onMove);window.removeEventListener('pointerup',onUp);
-  const homeX=boardX+p.x,homeY=boardY+p.y;
-  const dist=Math.hypot(p.cx-homeX,p.cy-homeY);
-  if(dist<Math.max(20,pieceW*0.28)){
-    setDivContent(p,homeX,homeY);p.locked=true;el.classList.add('locked');
-    el.style.zIndex=2;el.style.filter='none';
-    if(pieces.every(pp=>pp.locked))winNow();
-  }else{
-    el.style.zIndex=p.id+10;el.style.filter='drop-shadow(0 4px 6px rgba(0,0,0,0.45))';
+function onUp(e){
+  ptrs.delete(e.pointerId);
+  if(mode==='piece'&&dragP){
+    const p=dragP,el=document.getElementById('pc'+p.id);
+    const homeX=boardX+p.x,homeY=boardY+p.y;
+    if(Math.hypot(p.cx-homeX,p.cy-homeY)<Math.max(18,pieceW*0.30)){
+      placePiece(p,homeX,homeY);p.locked=true;el.classList.add('locked');el.style.zIndex=2;el.style.filter='none';
+      const n=pieces.filter(pp=>pp.locked).length;document.getElementById('cnt').textContent=n;
+      if(pieces.every(pp=>pp.locked))winNow();
+    }else{el.style.zIndex=p.id+10;el.style.filter='drop-shadow(0 4px 6px rgba(0,0,0,0.45))';}
+    dragP=null;
   }
-  drag=null;
+  stage().classList.remove('panning');
+  if(ptrs.size===1&&mode==='pinch'){ // drop back to pan with remaining finger
+    const only=[...ptrs.values()][0];mode='pan';panBase={panX,panY,sx:only.x,sy:only.y};
+  }else if(ptrs.size===0){mode=null;}
 }
-function solveDemo(){pieces.forEach(p=>{setDivContent(p,boardX+p.x,boardY+p.y);p.locked=true;
-  const el=document.getElementById('pc'+p.id);el.classList.add('locked');el.style.zIndex=2;el.style.filter='none';});winNow();}
+function startPinch(){mode='pinch';const v=[...ptrs.values()];
+  pinchBase={dist:dd(v[0],v[1]),zoom:zoom,
+    mid:{x:(v[0].x+v[1].x)/2,y:(v[0].y+v[1].y)/2},panX,panY};}
+function doPinch(){const v=[...ptrs.values()];if(v.length<2)return;
+  const dist=dd(v[0],v[1]);const r=dist/pinchBase.dist;
+  const nz=Math.max(minZoom*0.9,Math.min(4,pinchBase.zoom*r));
+  const rect=stageRect();const mx=pinchBase.mid.x-rect.left,my=pinchBase.mid.y-rect.top;
+  const wx=(mx-pinchBase.panX)/pinchBase.zoom, wy=(my-pinchBase.panY)/pinchBase.zoom;
+  zoom=nz;panX=mx-wx*zoom;panY=my-wy*zoom;applyT();}
+function dd(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+
+function solveDemo(){pieces.forEach(p=>{placePiece(p,boardX+p.x,boardY+p.y);p.locked=true;
+  const el=document.getElementById('pc'+p.id);el.classList.add('locked');el.style.zIndex=2;el.style.filter='none';});
+  document.getElementById('cnt').textContent=pieces.length;winNow();}
 function winNow(){solved=true;clearInterval(timerInt);document.getElementById('win').classList.add('show');
   showToast('Solved in '+document.getElementById('timer').textContent+'! (sample)');}
 function resetTimer(){started=false;clearInterval(timerInt);t0=0;document.getElementById('timer').textContent='0:00';}
 function tick(){const s=Math.floor((Date.now()-t0)/1000),m=Math.floor(s/60),ss=('0'+(s%60)).slice(-2);document.getElementById('timer').textContent=m+':'+ss;}
-window.addEventListener('resize',()=>{/* keep simple: rebuild on orientation change */});
 </script>
 </body>
 </html>
