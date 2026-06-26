@@ -14,14 +14,23 @@
 .qtile:hover{filter:brightness(1.08);}.qtile:active{transform:scale(.98);}
 .qtile .in{background:var(--bg2);padding:14px 13px 16px;min-height:116px;display:flex;flex-direction:column;
   clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 15px,100% calc(100% - 15px),calc(100% - 15px) 100%,15px 100%,0 calc(100% - 15px),0 15px);}
-.qtile.done{background:linear-gradient(145deg,#86efac,#22c55e 45%,#15803d);}
+/* three frame states: answered(blue) / correct(green) / wrong(yellow) */
+.qtile.answered{background:linear-gradient(145deg,#9cc4ff,#3b82f6 45%,#1e3a8a);}
+.qtile.correct{background:linear-gradient(145deg,#86efac,#22c55e 45%,#15803d);}
+.qtile.wrong{background:linear-gradient(145deg,#fde68a,#f59e0b 45%,#b45309);}
 .qtile .stag{display:inline-block;align-self:flex-start;font-size:.58rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
   color:#fff;background:var(--accent);padding:2px 8px;margin-bottom:9px;
   clip-path:polygon(4px 0,calc(100% - 4px) 0,100% 4px,100% calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,0 calc(100% - 4px),0 4px);}
 .qtile .qt{font-size:.85rem;font-weight:600;color:var(--text);line-height:1.25;}
-.qtile .chk{position:absolute;top:8px;right:9px;font-size:.68rem;font-weight:800;color:#0a3d18;display:none;}
-.qtile.done .chk{display:block;}.qtile.done .stag{background:rgba(255,255,255,.85);color:#0a2a12;}
-.qtile.done .qt{color:#0a2a12;}
+.qtile .chk{position:absolute;top:8px;right:9px;font-size:.6rem;font-weight:800;display:none;letter-spacing:.03em;}
+.qtile.answered .chk,.qtile.correct .chk,.qtile.wrong .chk{display:block;}
+.qtile.answered .stag,.qtile.correct .stag,.qtile.wrong .stag{background:rgba(255,255,255,.85);color:#1a1a1a;}
+.qtile.answered .qt,.qtile.answered .chk{color:#06183a;}
+.qtile.correct .qt,.qtile.correct .chk{color:#0a2a12;}
+.qtile.wrong .qt,.qtile.wrong .chk{color:#3a2606;}
+.legend{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:.66rem;color:var(--text-dim);margin:2px 0 10px;font-weight:700;}
+.legend i{display:inline-block;width:11px;height:11px;margin-right:5px;vertical-align:middle;}
+.lg-a{background:#3b82f6}.lg-c{background:#22c55e}.lg-w{background:#f59e0b}
 .qhead{font-size:1.22rem;font-weight:700;margin-bottom:4px;}
 .qsub{color:var(--text-dim);font-size:.85rem;margin-bottom:8px;}
 .opt{display:block;width:100%;background:var(--border);padding:2px;cursor:pointer;margin-top:10px;transition:filter .12s;}
@@ -80,9 +89,15 @@ input[type=range]::-moz-range-thumb{width:30px;height:30px;border:none;cursor:po
 <section class="screen active" id="screen-grid">
   <p class="hsub">Tap any question, in any order. Answer the ones you know.</p>
   <div class="prog">Answered <b id="adone">0</b> of <b id="atot">0</b></div>
-  <div class="note">Sample layout — scoring comes later. You don't have to answer them all.</div>
+  <div class="note">Sample layout — point values come later. You don't have to answer them all.</div>
+  <div class="legend">
+    <span><i class="lg-a"></i>Answered</span>
+    <span><i class="lg-c"></i>Correct</span>
+    <span><i class="lg-w"></i>Wrong — tap to retry</span>
+  </div>
   <div class="qgrid" id="qgrid"></div>
-  <span class="btn-frame oct-10"><button class="btn oct-9" onclick="submitGame()">Submit Game</button></span>
+  <span class="btn-frame oct-10"><button class="btn oct-9" onclick="checkAll()">Check My Answers</button></span>
+  <span class="btn-ghost-frame oct-8"><button class="btn-ghost oct-8" onclick="submitGame()">Submit Game</button></span>
   <footer>A taste of the night · Dr. Merritt Hemenway's 80th &amp; Retirement</footer>
 </section>
 
@@ -106,13 +121,35 @@ const QS=[
  {type:'choice',tile:'Where were Kairos 1-2-3 held?',q:'Where were Kairos retreats 1, 2, and 3 held?',options:['Mission San Luis Rey, Oceanside','Mission San Juan Capistrano','Santa Margarita Retreat House','Big Bear Lodge']},
  {type:'match',tile:'Match the people to their roles',q:'Match each person to their role in Merritt’s life.',left:['Dr. Wong','Dr. Sami Hayack','Dr. David Drew'],right:['Led the bypass','His cardiologist','Favorite teacher']}
 ];
-const answers={};let cur=-1,draft=null;
+const answers={};const checkedState={};let cur=-1,draft=null;
+/* sample answer key (the real game pulls this from your dad's key) */
+const KEY={0:13,1:0,2:2,3:[0,1,2],4:0,5:12,6:0,7:{0:0,1:1,2:2}};
+function isCorrect(i){
+  const a=answers[i],k=KEY[i],q=QS[i];if(a===undefined)return false;
+  if(q.type==='slider'||q.type==='choice')return a===k;
+  if(q.type==='select'){if(!Array.isArray(a)||a.length!==k.length)return false;
+    const s=[...a].sort((x,y)=>x-y),t=[...k].sort((x,y)=>x-y);return s.every((v,j)=>v===t[j]);}
+  if(q.type==='match'){const ak=Object.keys(a);return ak.length===Object.keys(k).length&&Object.keys(k).every(li=>a[li]===k[li]);}
+  return false;
+}
+function checkAll(){
+  let answered=0,correct=0;
+  QS.forEach((q,i)=>{if(answers[i]!==undefined){answered++;const ok=isCorrect(i);checkedState[i]=ok?'correct':'wrong';if(ok)correct++;}});
+  renderGrid();
+  if(answered===0)showToast('Answer a few first, then check.');
+  else showToast(correct+' of '+answered+' correct. Wrong ones are yellow — tap to retry.');
+}
 
 function renderGrid(){
   const g=document.getElementById('qgrid');g.innerHTML='';
-  QS.forEach((q,i)=>{const done=answers[i]!==undefined;
-    const el=document.createElement('div');el.className='qtile oct-18'+(done?' done':'');el.onclick=()=>openQ(i);
-    el.innerHTML='<div class="in"><span class="stag">'+TAG[q.type]+'</span><span class="chk">✓ Answered</span><div class="qt">'+q.tile+'</div></div>';
+  QS.forEach((q,i)=>{
+    const ans=answers[i]!==undefined;let cls='',label='';
+    if(ans){const st=checkedState[i];
+      if(st==='correct'){cls=' correct';label='✓ Correct';}
+      else if(st==='wrong'){cls=' wrong';label='Retry';}
+      else{cls=' answered';label='Answered';}}
+    const el=document.createElement('div');el.className='qtile oct-18'+cls;el.onclick=()=>openQ(i);
+    el.innerHTML='<div class="in"><span class="stag">'+TAG[q.type]+'</span><span class="chk">'+label+'</span><div class="qt">'+q.tile+'</div></div>';
     g.appendChild(el);});
   document.getElementById('atot').textContent=QS.length;
   document.getElementById('adone').textContent=Object.keys(answers).length;
@@ -188,7 +225,9 @@ function updateSaveBtn(){const q=QS[cur];let ok=false;
 function saveQ(){const q=QS[cur];
   if(q.type==='select')answers[cur]=draft.slice();
   else if(q.type==='match')answers[cur]=Object.assign({},draft);
-  else answers[cur]=draft;toGrid();}
+  else answers[cur]=draft;
+  delete checkedState[cur]; // re-answering resets it to "answered" (blue) until next check
+  toGrid();}
 function submitGame(){const n=Object.keys(answers).length;showToast('Game submitted! ('+n+' of '+QS.length+' answered) — sample only');}
 
 renderGrid();
