@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Dr. Hemenway's 80th — Photo Jigsaw (Sample)</title>
+<link rel="stylesheet" href="assets/tb.css" />
+<style>
+.barrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 2px;}
+.diff{display:flex;gap:6px;}
+.diff button{border:none;cursor:pointer;background:var(--bg3);color:var(--text-dim);font-weight:800;font-size:.7rem;
+  text-transform:uppercase;letter-spacing:.05em;padding:7px 11px;
+  clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px);}
+.diff button.on{background:var(--accent);color:#fff;}
+.timer{font-size:.92rem;font-weight:800;color:var(--red-light);letter-spacing:.06em;}
+.refrow{display:flex;align-items:center;gap:10px;margin:6px 0 10px;}
+.refrow img{width:54px;height:auto;border:2px solid var(--border);}
+.refrow span{font-size:.74rem;color:var(--text-muted);}
+.boardwrap{background:var(--frame-border);padding:3px;}
+.board{display:grid;width:100%;background:var(--bg2);gap:2px;
+  clip-path:polygon(13px 0,calc(100% - 13px) 0,100% 13px,100% calc(100% - 13px),calc(100% - 13px) 100%,13px 100%,0 calc(100% - 13px),0 13px);}
+.piece{background-image:url('assets/heart.jpg');background-repeat:no-repeat;cursor:pointer;position:relative;transition:filter .1s;}
+.piece:active{filter:brightness(1.1);}
+.piece.sel{outline:3px solid var(--red-light);outline-offset:-3px;z-index:2;}
+.win-msg{display:none;text-align:center;margin-top:12px;font-size:1.05rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:#fff;background:var(--accent);padding:12px;text-shadow:0 1px 3px rgba(0,0,0,.5);
+  clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px);}
+.win-msg.show{display:block;}
+.row2{display:flex;gap:8px;margin-top:10px;}
+.minibtn{flex:1;background:var(--border);padding:1.5px;cursor:pointer;}
+.minibtn .mi{background:var(--bg3);color:var(--text);text-align:center;padding:10px 6px;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+  clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);}
+</style>
+</head>
+<body>
+<div class="toprow">
+  <span class="brandmini">Time Bandit Entertainment</span>
+  <span class="theme-toggle oct-8" onclick="toggleTheme()"><button class="inner oct-8" id="themeBtn">Daylight</button></span>
+</div>
+<header class="hdr">
+  <img class="logo" src="assets/tba-logo.png" alt="Time Bandit Adventures" />
+  <div class="htitle"><div class="kicker">Photo Jigsaw</div>
+    <h1>Dr. Hemenway's <span class="age">80th</span></h1></div>
+  <img class="mascot" src="assets/mascot.png" alt="" />
+</header>
+<nav class="gamenav">
+  <a href="trivia.html">Trivia</a>
+  <a href="bingo.html">Bingo</a>
+  <a href="jigsaw.html" class="on">Jigsaw</a>
+  <a href="index.html">Menu</a>
+</nav>
+<p class="hsub">Tap two pieces to swap them and rebuild the photo. Beat the clock.</p>
+
+<div class="barrow">
+  <div class="diff">
+    <button data-n="3" class="on" onclick="setDiff(3)">Easy</button>
+    <button data-n="4" onclick="setDiff(4)">Medium</button>
+    <button data-n="5" onclick="setDiff(5)">Hard</button>
+  </div>
+  <div class="timer" id="timer">0:00</div>
+</div>
+<div class="refrow"><img src="assets/heart.jpg" alt="reference" /><span>The finished picture, for reference.</span></div>
+
+<div class="boardwrap oct-12"><div class="board" id="board"></div></div>
+<div class="win-msg" id="win">Solved! Nicely done.</div>
+
+<div class="row2">
+  <span class="minibtn oct-8" onclick="shuffleBoard()"><span class="mi oct-8">Shuffle / New</span></span>
+  <span class="minibtn oct-8" onclick="solveDemo()"><span class="mi oct-8">Peek: auto-solve</span></span>
+</div>
+
+<script src="assets/tb.js"></script>
+<script>
+let N=3, slots=[], sel=null, imgRatio=0.78, started=false, t0=0, timerInt=null, solved=false;
+const IMG='assets/heart.jpg';
+// preload to get aspect
+(function(){const im=new Image();im.onload=function(){imgRatio=im.naturalWidth/im.naturalHeight;build();};im.onerror=build;im.src=IMG;})();
+
+function setDiff(n){N=n;document.querySelectorAll('.diff button').forEach(b=>b.classList.toggle('on',+b.dataset.n===n));build();}
+function build(){
+  solved=false;document.getElementById('win').classList.remove('show');
+  const board=document.getElementById('board');
+  board.style.gridTemplateColumns='repeat('+N+',1fr)';
+  board.style.gridTemplateRows='repeat('+N+',1fr)';
+  board.style.aspectRatio=imgRatio;
+  slots=[...Array(N*N).keys()];
+  shuffleArr(slots);
+  // avoid already-solved shuffle
+  if(isSolved())shuffleArr(slots);
+  sel=null;render();resetTimer();
+}
+function shuffleArr(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function shuffleBoard(){build();}
+function render(){
+  const board=document.getElementById('board');board.innerHTML='';
+  slots.forEach((identity,pos)=>{
+    const r=Math.floor(identity/N),c=identity%N;
+    const d=document.createElement('div');
+    d.className='piece'+(sel===pos?' sel':'');
+    d.style.backgroundSize=(N*100)+'% '+(N*100)+'%';
+    d.style.backgroundPosition=(N>1?(c/(N-1)*100):0)+'% '+(N>1?(r/(N-1)*100):0)+'%';
+    d.onclick=()=>tap(pos);
+    board.appendChild(d);
+  });
+}
+function tap(pos){
+  if(solved)return;
+  if(!started){started=true;t0=Date.now();timerInt=setInterval(tick,500);}
+  if(sel===null){sel=pos;render();return;}
+  if(sel===pos){sel=null;render();return;}
+  [slots[sel],slots[pos]]=[slots[pos],slots[sel]];
+  sel=null;render();
+  if(isSolved())winNow();
+}
+function isSolved(){return slots.every((v,i)=>v===i);}
+function winNow(){
+  solved=true;clearInterval(timerInt);
+  document.getElementById('win').classList.add('show');
+  showToast('Solved in '+document.getElementById('timer').textContent+'! (sample)');
+}
+function solveDemo(){slots=[...Array(N*N).keys()];sel=null;render();winNow();}
+function resetTimer(){started=false;clearInterval(timerInt);t0=0;document.getElementById('timer').textContent='0:00';}
+function tick(){const s=Math.floor((Date.now()-t0)/1000);const m=Math.floor(s/60),ss=('0'+(s%60)).slice(-2);document.getElementById('timer').textContent=m+':'+ss;}
+</script>
+</body>
+</html>

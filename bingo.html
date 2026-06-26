@@ -4,72 +4,35 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Dr. Hemenway's 80th — Social Bingo (Sample)</title>
+<link rel="stylesheet" href="assets/tb.css" />
 <style>
-:root,[data-theme="dark"]{
-  --purple-dark:#2d1b5e;--purple:#4a2c7a;--purple-mid:#7c3aed;--purple-light:#9c6eff;
-  --gold:#f5c518;--gold-light:#ffe066;--gold-dark:#d4a017;
-  --bg:#0e0b18;--bg2:#16102a;--bg3:#1f1640;--border:#2d1b5e;
-  --text:#e8e0ff;--text-dim:#9080c0;--text-muted:#5a4a8a;
-  --success:#22c55e;--warn:#f59e0b;--error:#ef4444;
-  --metal:linear-gradient(145deg,#e8e8e8 0%,#b0b0b0 30%,#787878 70%,#b8b8b8 100%);
-  --frame-border:linear-gradient(145deg,#9c6eff 0%,#4a2c7a 50%,#2d1b5e 100%);
-}
-[data-theme="day"]{
-  --purple-dark:#5b3aa6;--purple:#6f47c9;--purple-mid:#7c3aed;--purple-light:#9c6eff;
-  --gold:#e0a500;--gold-light:#ffd54a;--gold-dark:#b07d00;
-  --bg:#f4f0fb;--bg2:#ffffff;--bg3:#ece5fb;--border:#c9b8f0;
-  --text:#241a3a;--text-dim:#5a4a8a;--text-muted:#9080c0;
-  --success:#15803d;--warn:#b45309;--error:#b91c1c;
-  --metal:linear-gradient(145deg,#ffffff 0%,#d8d8d8 30%,#a8a8a8 70%,#e8e8e8 100%);
-  --frame-border:linear-gradient(145deg,#b79cff 0%,#9c6eff 50%,#7c3aed 100%);
-}
-*{box-sizing:border-box;margin:0;padding:0;}
-html,body{background:var(--bg);color:var(--text);}
-body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;line-height:1.5;min-height:100vh;
-  padding:16px 12px 180px;max-width:560px;margin:0 auto;transition:background .3s,color .3s;}
-h1{letter-spacing:.02em;line-height:1.12;}
-.center{text-align:center;}
-.oct-8{clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);}
-.oct-10{clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px);}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
-.brand{font-size:.7rem;text-transform:uppercase;letter-spacing:.18em;color:var(--text-muted);font-weight:700;}
-.theme-toggle{background:var(--metal);padding:2px;cursor:pointer;}
-.theme-toggle .inner{background:var(--bg2);color:var(--text);border:none;cursor:pointer;
-  padding:6px 12px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
-.hero{text-align:center;margin-bottom:6px;}
-.hero .kicker{color:var(--gold);font-weight:800;letter-spacing:.2em;text-transform:uppercase;font-size:.68rem;}
-.hero h1{font-size:1.7rem;margin:4px 0 2px;}
-.hero h1 .age{color:var(--gold);}
-.hero p{color:var(--text-dim);font-size:.86rem;max-width:36ch;margin:0 auto;}
-/* ---- board ---- */
-.board{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:14px 0 6px;}
+body{padding-bottom:190px;}
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:10px 0 6px;}
 .cell{aspect-ratio:1;background:var(--frame-border);padding:2px;cursor:pointer;transition:filter .12s,transform .08s;}
 .cell:active{transform:scale(.95);}
 .cell .cin{width:100%;height:100%;background:var(--bg2);display:flex;align-items:center;justify-content:center;text-align:center;
   padding:4px 3px;font-size:.56rem;font-weight:600;line-height:1.12;color:var(--text);overflow:hidden;
   clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);}
-.cell.sel{background:var(--metal);}
-.cell.sel .cin{background:var(--purple);color:#fff;}
+.cell.sel{background:var(--accent);}
+.cell.sel .cin{background:transparent;color:#fff;}
 .cell.done{background:linear-gradient(145deg,#86efac,#22c55e 45%,#15803d);}
 .cell.done .cin{background:transparent;color:#06280f;font-weight:800;}
-.cell.free{background:linear-gradient(145deg,#fde047,#f5c518 40%,#92400e);}
-.cell.free .cin{background:transparent;color:#1a0a00;font-weight:800;font-size:.62rem;letter-spacing:.04em;}
-.cell.win .cin{box-shadow:inset 0 0 0 2px var(--gold);}
+.cell.free{background:linear-gradient(145deg,#ff5a5a,#d32f2f 42%,#8b0000);}
+.cell.free .cin{background:transparent;color:#fff;font-weight:800;font-size:.62rem;letter-spacing:.04em;text-shadow:0 1px 2px rgba(0,0,0,.5);}
+.cell.win .cin{box-shadow:inset 0 0 0 2px var(--red-light);}
 .row2{display:flex;gap:8px;margin-top:8px;}
 .minibtn{flex:1;background:var(--border);padding:1.5px;cursor:pointer;}
-.minibtn .mi{background:var(--bg3);color:var(--text);text-align:center;padding:9px 6px;font-size:.72rem;font-weight:700;
-  text-transform:uppercase;letter-spacing:.05em;
+.minibtn .mi{background:var(--bg3);color:var(--text);text-align:center;padding:9px 6px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
   clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);}
 .count{text-align:center;font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);font-weight:700;margin-top:8px;}
-.count b{color:var(--gold);}
+.count b{color:var(--red-light);}
 .bingo-banner{display:none;text-align:center;margin-top:10px;font-size:1.1rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
-  color:#1a0a00;background:linear-gradient(160deg,#ffe066,#f5c518 40%,#d4a017);padding:10px;
+  color:#fff;background:var(--accent);padding:10px;text-shadow:0 1px 3px rgba(0,0,0,.5);
   clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px);}
 .bingo-banner.show{display:block;}
-/* ---- detail dock (below board, fixed) ---- */
 .dock{position:fixed;left:0;right:0;bottom:0;background:var(--frame-border);padding:3px 3px 0;}
-.dock .din{background:var(--bg2);padding:14px 16px calc(16px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto;}
-.dock .dlab{font-size:.66rem;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);font-weight:800;margin-bottom:4px;}
+.dock .din{background:var(--bg2);padding:14px 16px calc(14px + env(safe-area-inset-bottom));max-width:600px;margin:0 auto;}
+.dock .dlab{font-size:.64rem;text-transform:uppercase;letter-spacing:.12em;color:var(--red-light);font-weight:800;margin-bottom:4px;}
 .dock .dtext{font-size:1rem;font-weight:600;color:var(--text);}
 .dock .dhint{font-size:.76rem;color:var(--text-muted);margin-top:6px;}
 .dock.empty .dtext{color:var(--text-muted);font-weight:500;font-style:italic;}
@@ -77,34 +40,39 @@ h1{letter-spacing:.02em;line-height:1.12;}
 .dock .inwrap{flex:1;background:var(--frame-border);padding:1.5px;}
 .dock .inwrap input{width:100%;background:var(--bg3);border:none;color:var(--text);padding:10px 12px;font-size:.92rem;outline:none;}
 .dock .markbtn{background:var(--metal);padding:2px;cursor:pointer;}
-.dock .markbtn button{border:none;cursor:pointer;padding:10px 16px;font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
-  color:#1a0a00;background:linear-gradient(160deg,#ffe066,#f5c518 40%,#d4a017);}
+.dock .markbtn button{border:none;cursor:pointer;padding:10px 16px;font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#fff;background:var(--accent);}
 .dock .clearmark{background:none;border:none;color:var(--text-dim);font-size:.74rem;cursor:pointer;margin-top:8px;text-decoration:underline;}
 </style>
 </head>
 <body>
-
-<div class="topbar">
-  <div class="brand">Time Bandit Entertainment</div>
+<div class="toprow">
+  <span class="brandmini">Time Bandit Entertainment</span>
   <span class="theme-toggle oct-8" onclick="toggleTheme()"><button class="inner oct-8" id="themeBtn">Daylight</button></span>
 </div>
-
-<div class="hero">
-  <div class="kicker">Social Bingo · Sample</div>
-  <h1>Dr. Hemenway's <span class="age">80th</span></h1>
-  <p>Work the room. Tap a square to read it. Tap it again to log who you found.</p>
-</div>
+<header class="hdr">
+  <img class="logo" src="assets/tba-logo.png" alt="Time Bandit Adventures" />
+  <div class="htitle"><div class="kicker">Social Bingo</div>
+    <h1>Dr. Hemenway's <span class="age">80th</span></h1></div>
+  <img class="mascot" src="assets/mascot.png" alt="" />
+</header>
+<nav class="gamenav">
+  <a href="trivia.html">Trivia</a>
+  <a href="bingo.html" class="on">Bingo</a>
+  <a href="jigsaw.html">Jigsaw</a>
+  <a href="index.html">Menu</a>
+</nav>
+<p class="hsub">Work the room. Tap a square to read it. Tap it again to log who you found.</p>
 
 <div class="board" id="board"></div>
 <div class="count">Found <b id="cdone">0</b> of <b id="ctot">24</b> · Get 5 in a row for BINGO</div>
 <div class="bingo-banner" id="banner">★ BINGO! ★</div>
 
 <div class="row2">
-  <span class="minibtn oct-8" onclick="newCard()"><span class="mi oct-8">New Card (reshuffle)</span></span>
+  <span class="minibtn oct-8" onclick="newCard()"><span class="mi oct-8">New Card</span></span>
   <span class="minibtn oct-8" onclick="clearAll()"><span class="mi oct-8">Clear marks</span></span>
 </div>
+<span class="btn-frame oct-10"><button class="btn oct-9" onclick="submitGame()">Submit Card</button></span>
 
-<!-- detail dock -->
 <div class="dock empty oct-10" id="dock"><div class="din">
   <div class="dlab">Tap a square</div>
   <div class="dtext" id="dtext">The full prompt shows here when you tap a square.</div>
@@ -112,139 +80,72 @@ h1{letter-spacing:.02em;line-height:1.12;}
   <div id="ansArea"></div>
 </div></div>
 
+<script src="assets/tb.js"></script>
 <script>
-/* theme */
-function toggleTheme(){const r=document.documentElement,day=r.getAttribute('data-theme')==='day';
-  r.setAttribute('data-theme',day?'dark':'day');document.getElementById('themeBtn').textContent=day?'Daylight':'Dark';
-  try{localStorage.setItem('tb_theme',day?'dark':'day')}catch(e){}}
-(function(){try{const t=localStorage.getItem('tb_theme');if(t){document.documentElement.setAttribute('data-theme',t);
-  document.getElementById('themeBtn').textContent=t==='day'?'Dark':'Daylight';}}catch(e){}})();
-
-/* ---- prompts: 19 from Tom's dad + 5 CC fillers (marked, easy to swap) ---- */
 const PROMPTS=[
- {t:'Someone Merritt taught'},
- {t:'Once a colleague'},
- {t:'Office staff member'},
- {t:'Works with Special Needs students'},
- {t:'Coaches football'},
- {t:'Coaches basketball'},
- {t:'Friend of the family'},
- {t:'Worked at SMCHS'},
+ {t:'Someone Merritt taught'},{t:'Once a colleague'},{t:'Office staff member'},{t:'Works with Special Needs students'},
+ {t:'Coaches football'},{t:'Coaches basketball'},{t:'Friend of the family'},{t:'Worked at SMCHS'},
  {t:'Amat #1',d:'Connected to Bishop Amat (exact match pending from your dad)'},
  {t:'Amat #2',d:'Connected to Bishop Amat (exact match pending from your dad)'},
  {t:'CSHM',d:'Connected to CSHM (exact match pending from your dad)'},
  {t:'Damien',d:'Connected to Damien (exact match pending from your dad)'},
- {t:'Former student'},
- {t:'Made a Kairos'},
- {t:'Sang on Kairos (Amat only)'},
- {t:'Coaches soccer'},
- {t:'Taught math'},
- {t:'Taught IB'},
- {t:'Coaches baseball'},
- {t:'Traveled 100+ miles to be here',f:1},
- {t:'Has known Merritt 30+ years',f:1},
- {t:'Has a good Merritt story',f:1},
- {t:'Met Merritt through church',f:1},
- {t:'Is a Hemenway by blood',f:1}
+ {t:'Former student'},{t:'Made a Kairos'},{t:'Sang on Kairos (Amat only)'},{t:'Coaches soccer'},
+ {t:'Taught math'},{t:'Taught IB'},{t:'Coaches baseball'},
+ {t:'Traveled 100+ miles to be here',f:1},{t:'Has known Merritt 30+ years',f:1},{t:'Has a good Merritt story',f:1},
+ {t:'Met Merritt through church',f:1},{t:'Is a Hemenway by blood',f:1}
 ];
-const FREE=12; // center index in the 25-cell grid
-
-let order=[];        // 24 prompt indexes shuffled into non-center cells
-let marked={};       // cellIndex -> name
-let sel=null;        // selected cell index
-
+const FREE=12;
+let order=[],marked={},sel=null;
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-
-function loadOrConfetti(){
-  try{const s=localStorage.getItem('tb_bingo_card');if(s){const o=JSON.parse(s);order=o.order;marked=o.marked||{};return;}}catch(e){}
-  newCard(true);
-}
+function load(){try{const s=localStorage.getItem('tb_bingo_card');if(s){const o=JSON.parse(s);order=o.order;marked=o.marked||{};return;}}catch(e){}newCard(true);}
 function persist(){try{localStorage.setItem('tb_bingo_card',JSON.stringify({order:order,marked:marked}));}catch(e){}}
-function newCard(skipPersistReset){
-  order=shuffle([...Array(PROMPTS.length).keys()]).slice(0,24);
-  marked={};sel=null;
-  persist();render();showDetail(null);
-}
+function newCard(){order=shuffle([...Array(PROMPTS.length).keys()]).slice(0,24);marked={};sel=null;persist();render();showDetail(null);}
 function clearAll(){marked={};sel=null;persist();render();showDetail(null);}
-
-function promptForCell(ci){
-  if(ci===FREE)return null;
-  const slot=ci<FREE?ci:ci-1; // 24 prompts mapped around the center
-  return PROMPTS[order[slot]];
-}
-
+function promptForCell(ci){if(ci===FREE)return null;const slot=ci<FREE?ci:ci-1;return PROMPTS[order[slot]];}
+function esc(s){return(s+'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function render(){
   const b=document.getElementById('board');b.innerHTML='';
-  for(let ci=0;ci<25;ci++){
-    const cell=document.createElement('div');
-    if(ci===FREE){
-      cell.className='cell free';
-      cell.innerHTML='<div class="cin">FREE ★</div>';
-      b.appendChild(cell);continue;
-    }
-    const p=promptForCell(ci);
-    const done=marked[ci]!==undefined;
+  for(let ci=0;ci<25;ci++){const cell=document.createElement('div');
+    if(ci===FREE){cell.className='cell free';cell.innerHTML='<div class="cin">FREE ★</div>';b.appendChild(cell);continue;}
+    const p=promptForCell(ci),done=marked[ci]!==undefined;
     cell.className='cell'+(done?' done':'')+(sel===ci?' sel':'');
-    cell.innerHTML='<div class="cin">'+(done?'✓ '+escapeHtml(marked[ci]||'Found'):escapeHtml(p.t))+'</div>';
-    cell.onclick=()=>tapCell(ci);
-    b.appendChild(cell);
-  }
-  document.getElementById('cdone').textContent=Object.keys(marked).length;
-  checkBingo();
+    cell.innerHTML='<div class="cin">'+(done?'✓ '+esc(marked[ci]||'Found'):esc(p.t))+'</div>';
+    cell.onclick=()=>tapCell(ci);b.appendChild(cell);}
+  document.getElementById('cdone').textContent=Object.keys(marked).length;checkBingo();
 }
-function escapeHtml(s){return (s+'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-
-function tapCell(ci){
-  if(sel===ci){ enterAnswer(ci); return; }   // second tap on the SAME square = answer it
-  sel=ci;render();showDetail(ci);
-}
-
+function tapCell(ci){if(sel===ci){enterAnswer(ci);return;}sel=ci;render();showDetail(ci);}
 function showDetail(ci){
-  const dock=document.getElementById('dock');
-  const ans=document.getElementById('ansArea');ans.innerHTML='';
-  if(ci===null){dock.classList.add('empty');
-    document.querySelector('.dlab').textContent='Tap a square';
+  const dock=document.getElementById('dock');document.getElementById('ansArea').innerHTML='';
+  if(ci===null){dock.classList.add('empty');document.querySelector('.dlab').textContent='Tap a square';
     document.getElementById('dtext').textContent='The full prompt shows here when you tap a square.';
-    document.getElementById('dhint').textContent='Tap the same square again to log who you met.';
-    return;}
-  dock.classList.remove('empty');
-  const p=promptForCell(ci);
+    document.getElementById('dhint').textContent='Tap the same square again to log who you met.';return;}
+  dock.classList.remove('empty');const p=promptForCell(ci);
   document.querySelector('.dlab').textContent='Find someone who is...';
   document.getElementById('dtext').textContent=p.t+(p.f?'  (sample square)':'');
   document.getElementById('dhint').textContent=p.d?p.d:(marked[ci]!==undefined?'Marked: '+marked[ci]:'Tap this square again to log who you met.');
 }
-
 function enterAnswer(ci){
-  const ans=document.getElementById('ansArea');
-  const existing=marked[ci]||'';
+  const ans=document.getElementById('ansArea');const existing=marked[ci]||'';
   document.querySelector('.dlab').textContent='Who did you meet?';
   document.getElementById('dhint').textContent='Type their name to mark this square.';
-  ans.innerHTML='<div class="ansrow"><span class="inwrap oct-8"><input id="whoInput" placeholder="Their name" value="'+escapeHtml(existing)+'"/></span>'
+  ans.innerHTML='<div class="ansrow"><span class="inwrap oct-8"><input id="whoInput" placeholder="Their name" value="'+esc(existing)+'"/></span>'
     +'<span class="markbtn oct-8"><button class="oct-8" onclick="markFound('+ci+')">Mark Found</button></span></div>'
     +(marked[ci]!==undefined?'<button class="clearmark" onclick="unmark('+ci+')">Remove this mark</button>':'');
-  const inp=document.getElementById('whoInput');inp.focus();
-  inp.addEventListener('keydown',e=>{if(e.key==='Enter')markFound(ci);});
+  const inp=document.getElementById('whoInput');inp.focus();inp.addEventListener('keydown',e=>{if(e.key==='Enter')markFound(ci);});
 }
-function markFound(ci){
-  const v=document.getElementById('whoInput').value.trim();
-  marked[ci]=v||'Found';persist();sel=null;render();showDetail(null);
-}
+function markFound(ci){const v=document.getElementById('whoInput').value.trim();marked[ci]=v||'Found';persist();sel=null;render();showDetail(null);}
 function unmark(ci){delete marked[ci];persist();render();showDetail(ci);}
-
-/* ---- bingo detection (free center always counts) ---- */
 function isMarked(ci){return ci===FREE||marked[ci]!==undefined;}
 function checkBingo(){
-  const lines=[];
-  for(let r=0;r<5;r++)lines.push([0,1,2,3,4].map(c=>r*5+c));
+  const lines=[];for(let r=0;r<5;r++)lines.push([0,1,2,3,4].map(c=>r*5+c));
   for(let c=0;c<5;c++)lines.push([0,1,2,3,4].map(r=>r*5+c));
   lines.push([0,6,12,18,24]);lines.push([4,8,12,16,20]);
-  let win=false;const winCells=new Set();
-  lines.forEach(L=>{if(L.every(isMarked)){win=true;L.forEach(x=>winCells.add(x));}});
+  let win=false;const wc=new Set();lines.forEach(L=>{if(L.every(isMarked)){win=true;L.forEach(x=>wc.add(x));}});
   document.getElementById('banner').classList.toggle('show',win);
-  document.querySelectorAll('.board .cell').forEach((el,i)=>el.classList.toggle('win',winCells.has(i)));
+  document.querySelectorAll('.board .cell').forEach((el,i)=>el.classList.toggle('win',wc.has(i)));
 }
-
-loadOrConfetti();render();
+function submitGame(){showToast('Card submitted! ('+Object.keys(marked).length+' of 24 found) — sample only');}
+load();render();
 </script>
 </body>
 </html>
