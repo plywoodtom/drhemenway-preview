@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Dr. Hemenway's 80th — Photo Booth</title>
+<link rel="stylesheet" href="assets/tb.css" />
+<style>
+body{padding:10px 12px 30px;}
+.booth{position:relative;width:100%;background:#000;overflow:hidden;border:3px solid var(--border);
+  clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px);}
+.booth video,.booth img.shot{display:block;width:100%;height:auto;}
+.booth video{transform:scaleX(-1);} /* mirror preview so posing feels natural */
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;}
+.flash.go{animation:fl .5s ease;}
+@keyframes fl{0%{opacity:0}10%{opacity:.95}100%{opacity:0}}
+.count{position:absolute;inset:0;display:none;align-items:center;justify-content:center;}
+.count.show{display:flex;}
+.count span{font-size:34vw;font-weight:900;color:#fff;text-shadow:0 0 30px var(--red-glow),0 6px 18px rgba(0,0,0,.6);line-height:1;}
+.badge{position:absolute;top:10px;left:10px;background:rgba(10,12,16,.7);border:1px solid var(--border);color:#fff;
+  font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:6px 10px;
+  clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px);}
+.err{color:var(--warn);font-size:.86rem;text-align:center;padding:24px;}
+.controls{margin-top:12px;}
+.camsel{margin-top:10px;font-size:.74rem;color:var(--text-dim);}
+.camsel select{width:100%;margin-top:4px;background:var(--bg3);color:var(--text);border:1px solid var(--border);padding:9px;font-size:.85rem;}
+.shotwrap{display:none;}
+.shotwrap.show{display:block;}
+.livewrap.hide{display:none;}
+.note{text-align:center;font-size:.72rem;color:var(--text-muted);margin-top:10px;font-style:italic;}
+.bigbtn{font-size:1.05rem;padding:16px;}
+</style>
+</head>
+<body>
+<div class="toprow">
+  <span class="brandmini">Time Bandit Entertainment</span>
+  <span class="theme-toggle oct-8" onclick="toggleTheme()"><button class="inner oct-8" id="themeBtn">Daylight</button></span>
+</div>
+<header class="hdr">
+  <img class="charL" src="assets/adventurer.png" alt="Time Bandit adventurer" />
+  <div class="htitle"><div class="kicker">Photo Booth</div>
+    <h1>Dr. Hemenway's <span class="age">80th</span></h1></div>
+  <img class="charR" src="assets/girl.png" alt="Adventurer" />
+</header>
+
+<!-- LIVE camera -->
+<div class="livewrap" id="livewrap">
+  <div class="booth" id="booth">
+    <div class="badge">Live preview - not saved</div>
+    <video id="video" autoplay playsinline muted></video>
+    <div class="count" id="count"><span id="countNum">3</span></div>
+    <div class="flash" id="flash"></div>
+    <div class="err" id="err" style="display:none"></div>
+  </div>
+  <div class="controls">
+    <span class="btn-frame oct-10"><button class="btn oct-9 bigbtn" id="startBtn" onclick="startCountdown()">Start Countdown</button></span>
+  </div>
+  <div class="camsel" id="camsel" style="display:none">
+    Camera:
+    <select id="camPick" onchange="pickCam(this.value)"></select>
+  </div>
+  <div class="note">Tip: on the Pi, run this full-screen in the browser (kiosk mode). The live video stays on the device - only the photo you snap gets saved.</div>
+</div>
+
+<!-- captured photo -->
+<div class="shotwrap" id="shotwrap">
+  <div class="booth"><img class="shot" id="shot" alt="your photo" /></div>
+  <div class="controls">
+    <span class="btn-frame oct-10"><button class="btn oct-9 bigbtn" onclick="savePhoto()">Save / Download Photo</button></span>
+    <span class="btn-ghost-frame oct-8"><button class="btn-ghost oct-8" onclick="retake()">Retake</button></span>
+  </div>
+  <div class="note">In the real party app this photo auto-uploads to the live slideshow + album, and a QR appears so guests can grab it. This standalone test just lets you save it to check the camera.</div>
+</div>
+
+<canvas id="canvas" style="display:none"></canvas>
+
+<script src="assets/tb.js"></script>
+<script>
+const video=document.getElementById('video');
+let stream=null,lastShot=null,counting=false;
+
+async function startCam(deviceId){
+  try{
+    if(stream)stream.getTracks().forEach(t=>t.stop());
+    const constraints={audio:false,video:deviceId?{deviceId:{exact:deviceId}}:{width:{ideal:1280},height:{ideal:720},facingMode:'user'}};
+    stream=await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject=stream;document.getElementById('err').style.display='none';video.style.display='block';
+    listCams();
+  }catch(e){
+    video.style.display='none';
+    const el=document.getElementById('err');el.style.display='block';
+    el.textContent='Camera not available: '+e.message+'. Allow camera access, and make sure the webcam is plugged in.';
+  }
+}
+async function listCams(){
+  try{
+    const devs=await navigator.mediaDevices.enumerateDevices();
+    const cams=devs.filter(d=>d.kind==='videoinput');
+    if(cams.length>1){
+      const sel=document.getElementById('camPick');sel.innerHTML='';
+      cams.forEach((c,i)=>{const o=document.createElement('option');o.value=c.deviceId;o.textContent=c.label||('Camera '+(i+1));sel.appendChild(o);});
+      document.getElementById('camsel').style.display='block';
+    }
+  }catch(e){}
+}
+function pickCam(id){startCam(id);}
+
+function startCountdown(){
+  if(counting||!stream)return;counting=true;
+  document.getElementById('startBtn').disabled=true;
+  let n=3;const cd=document.getElementById('count'),num=document.getElementById('countNum');
+  cd.classList.add('show');num.textContent=n;
+  const tick=setInterval(()=>{
+    n--;
+    if(n>0){num.textContent=n;}
+    else{clearInterval(tick);cd.classList.remove('show');snap();}
+  },1000);
+}
+function snap(){
+  const c=document.getElementById('canvas');
+  const w=video.videoWidth||1280,h=video.videoHeight||720;
+  c.width=w;c.height=h;const ctx=c.getContext('2d');
+  // mirror to match the preview the guest posed in
+  ctx.translate(w,0);ctx.scale(-1,1);
+  ctx.drawImage(video,0,0,w,h);
+  const flash=document.getElementById('flash');flash.classList.add('go');setTimeout(()=>flash.classList.remove('go'),500);
+  lastShot=c.toDataURL('image/jpeg',0.92);
+  document.getElementById('shot').src=lastShot;
+  document.getElementById('livewrap').classList.add('hide');
+  document.getElementById('shotwrap').classList.add('show');
+  counting=false;document.getElementById('startBtn').disabled=false;
+}
+function savePhoto(){
+  if(!lastShot)return;
+  const a=document.createElement('a');a.href=lastShot;
+  a.download='hemenway80-photobooth.jpg';document.body.appendChild(a);a.click();a.remove();
+  showToast('Photo saved. (In the app it would upload to the live slideshow.)');
+}
+function retake(){
+  document.getElementById('shotwrap').classList.remove('show');
+  document.getElementById('livewrap').classList.remove('hide');
+}
+startCam();
+</script>
+</body>
+</html>
