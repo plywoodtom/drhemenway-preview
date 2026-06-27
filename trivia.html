@@ -31,6 +31,10 @@
 .legend{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:.66rem;color:var(--text-dim);margin:2px 0 10px;font-weight:700;}
 .legend i{display:inline-block;width:11px;height:11px;margin-right:5px;vertical-align:middle;}
 .lg-a{background:#3b82f6}.lg-c{background:#22c55e}.lg-w{background:#f59e0b}
+.rb{font-weight:800;font-size:.92rem;padding:10px 12px;margin-bottom:10px;
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);}
+.rb.ok{background:linear-gradient(145deg,#86efac,#22c55e 45%,#15803d);color:#06280f;}
+.rb.no{background:linear-gradient(145deg,#fde68a,#f59e0b 45%,#b45309);color:#3a2606;}
 .qhead{font-size:1.22rem;font-weight:700;margin-bottom:4px;}
 .qsub{color:var(--text-dim);font-size:.85rem;margin-bottom:8px;}
 .opt{display:block;width:100%;background:var(--border);padding:2px;cursor:pointer;margin-top:10px;transition:filter .12s;}
@@ -112,21 +116,26 @@ input[type=range]::-moz-range-thumb{width:30px;height:30px;border:none;cursor:po
 <script>
 const TAG={slider:'Slide',choice:'Pick One',select:'Pick All',match:'Match'};
 const QS=[
- {type:'slider',tile:'Years to finish his PhD?',q:'How many years did it take Merritt to finish his PhD?',sub:'From acceptance to completion.',min:0,max:25,start:5,unit:'years'},
+ {type:'slider',tile:'Years to finish his PhD?',q:'How many years did it take Merritt to finish his PhD?',sub:'From acceptance to completion. (land within range to score)',min:0,max:25,start:5,unit:'years',tol:1},
  {type:'choice',tile:'Who led the quadruple bypass?',q:'Who led Merritt’s quadruple bypass surgery?',options:['Dr. Wong','Dr. Pong','Dr. Sami Hayack','Dr. Reyes']},
  {type:'slider',tile:'How many movies has he been in?',q:'How many full-length movies has Merritt appeared in?',sub:'',min:0,max:10,start:3,unit:'movies'},
  {type:'select',tile:'Which schools had televised announcements?',q:'Which schools had televised announcements?',sub:'Pick all that apply.',options:['Bishop Amat','CSHM','Santa Margarita','Damien','Cantwell']},
  {type:'choice',tile:'Who gave the Lead, Learn, Proclaim award?',q:'The Lead, Learn, Proclaim Award Merritt won was given by which institution?',options:['National Catholic Education Association','Diocese of Los Angeles','U.S. Department of Education','National Honor Society']},
- {type:'slider',tile:'Seniors on his first Kairos?',q:'How many seniors were on Merritt’s very first Kairos retreat?',sub:'',min:0,max:30,start:8,unit:'seniors'},
+ {type:'slider',tile:'Seniors on his first Kairos?',q:'How many seniors were on Merritt’s very first Kairos retreat?',sub:'Get within range to score.',min:0,max:30,start:8,unit:'seniors',tol:1},
  {type:'choice',tile:'Where were Kairos 1-2-3 held?',q:'Where were Kairos retreats 1, 2, and 3 held?',options:['Mission San Luis Rey, Oceanside','Mission San Juan Capistrano','Santa Margarita Retreat House','Big Bear Lodge']},
  {type:'match',tile:'Match the people to their roles',q:'Match each person to their role in Merritt’s life.',left:['Dr. Wong','Dr. Sami Hayack','Dr. David Drew'],right:['Led the bypass','His cardiologist','Favorite teacher']}
 ];
 const answers={};const checkedState={};let cur=-1,draft=null;
 /* sample answer key (the real game pulls this from your dad's key) */
 const KEY={0:13,1:0,2:2,3:[0,1,2],4:0,5:12,6:0,7:{0:0,1:1,2:2}};
+function revealOf(i){const q=QS[i],k=KEY[i];
+  if(q.type==='slider')return k+' '+q.unit;
+  if(q.type==='choice')return q.options[k];
+  return null;}
 function isCorrect(i){
   const a=answers[i],k=KEY[i],q=QS[i];if(a===undefined)return false;
-  if(q.type==='slider'||q.type==='choice')return a===k;
+  if(q.type==='slider')return Math.abs(a-k)<=(q.tol||0);
+  if(q.type==='choice')return a===k;
   if(q.type==='select'){if(!Array.isArray(a)||a.length!==k.length)return false;
     const s=[...a].sort((x,y)=>x-y),t=[...k].sort((x,y)=>x-y);return s.every((v,j)=>v===t[j]);}
   if(q.type==='match'){const ak=Object.keys(a);return ak.length===Object.keys(k).length&&Object.keys(k).every(li=>a[li]===k[li]);}
@@ -159,7 +168,10 @@ function esc(s){return(s+'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':
 
 function openQ(i){
   cur=i;draft=null;const q=QS[i];const b=document.getElementById('qbody');
-  let h='<div class="qhead">'+esc(q.q)+'</div>';if(q.sub)h+='<div class="qsub">'+esc(q.sub)+'</div>';
+  let h='';const cs=checkedState[i];
+  if(cs==='correct'){const r=revealOf(i);h+='<div class="rb ok">Correct!'+(r?' The answer is '+esc(r)+'.':'')+'</div>';}
+  else if(cs==='wrong'){h+='<div class="rb no">Not quite - change your answer and check again.</div>';}
+  h+='<div class="qhead">'+esc(q.q)+'</div>';if(q.sub)h+='<div class="qsub">'+esc(q.sub)+'</div>';
   if(q.type==='slider'){const v=answers[i]!==undefined?answers[i]:q.start;draft=v;
     h+='<div class="slid-val"><span class="num" id="sv">'+v+'</span><span class="unit">'+q.unit+'</span></div>';
     h+='<input type="range" min="'+q.min+'" max="'+q.max+'" value="'+v+'" oninput="onSlide(this.value)" />';
