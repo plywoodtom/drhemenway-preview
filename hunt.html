@@ -123,13 +123,15 @@ footer{margin-top:24px;}
 <script>
 /* ===== questions ===== */
 const Q=[
- {id:'bypass',cat:'Family',type:'choice',q:"Who led Merritt's quadruple bypass surgery?",options:['Dr. Pong','Dr. Wong','Dr. Sami Hayack','Dr. Reyes'],ans:0,open:true,unlocks:'cardio'},
+ {id:'heartjigsaw',cat:'Family',type:'jigsaw',q:'Assemble the heart photo to begin the heart chain.',open:true,unlocks:'bypass'},
+ {id:'bypass',cat:'Family',type:'choice',q:"Who led Merritt's quadruple bypass surgery?",options:['Dr. Pong','Dr. Wong','Dr. Sami Hayack','Dr. Reyes'],ans:0,unlocks:'cardio',
+   unlockMsg:'You put that back together with a steady hand. Now - who performed the real surgery, the quadruple bypass?'},
  {id:'cardio',cat:'Family',type:'choice',q:"Who is Merritt's cardiologist?",options:['Dr. Sami Hayack','Dr. Pong','Dr. Ellen Cho','Dr. Raymond Patel'],ans:0,
    unlockMsg:'Solved with surgical precision! Now meet the doctor who keeps his heart running.'},
  {id:'phd',cat:'Family',type:'slider',q:'How many years did it take Merritt to finish his PhD?',sub:'Acceptance to completion - land within range to score.',min:0,max:25,start:5,unit:'years',ans:13,tol:1,open:true,unlocks:'favteacher'},
  {id:'favteacher',cat:'Family',type:'choice',q:'Merritt was a student for over 20 years. Who was his favorite teacher ever?',options:['Dr. David Drew','Fr. Daniel Moore','Sr. Catherine Ames','Dr. Alan Pearce'],ans:0,
    unlockMsg:'13 years a student - so who was HIS favorite teacher ever?'},
- {id:'televised',cat:'Amat',type:'select',q:'Which schools had televised announcements?',sub:'Pick all that apply.',options:['Bishop Amat','CSHM','Santa Margarita','Damien','Cantwell'],ans:[0,1,2],open:true,unlocks:'award'},
+ {id:'televised',cat:'General',type:'select',q:'Which schools had televised announcements?',sub:'Pick all that apply.',options:['Bishop Amat','CSHM','Santa Margarita','Damien','Cantwell'],ans:[0,1,2],open:true,unlocks:'award'},
  {id:'award',cat:'Family',type:'choice',q:'The Lead, Learn, Proclaim Award Merritt won was given by what institution?',options:['National Catholic Education Association','Diocese of Los Angeles','U.S. Department of Education','National Honor Society'],ans:0,
    unlockMsg:'From the morning announcements to the national stage - here is his big award.'},
  {id:'firstkairos',cat:'Kairos',type:'slider',q:'How many seniors were on Merritt’s very first Kairos?',sub:'Get within range to score.',min:0,max:30,start:8,unit:'seniors',ans:12,tol:1,open:true,unlocks:'kairosloc'},
@@ -152,8 +154,22 @@ const WRONGLINES=[
 let ST={},score=0,cur=null,draft=null;
 function fresh(){ST={};Q.forEach(q=>ST[q.id]={status:q.open?'open':'locked',attempts:0,earned:0,wrong:[]});score=0;}
 function load(){
-  try{const s=localStorage.getItem('tb_hunt');if(s){const o=JSON.parse(s);ST=o.ST;score=o.score;return;}}catch(e){}
+  try{const s=localStorage.getItem('tb_hunt');if(s){const o=JSON.parse(s);ST=o.ST;score=o.score;
+    Q.forEach(q=>{if(!ST[q.id])ST[q.id]={status:q.open?'open':'locked',attempts:0,earned:0,wrong:[]};}); // migrate new puzzles
+    return;}}catch(e){}
   fresh();
+}
+function startJigsaw(){location.href='jigsaw.html?hunt=1';}
+function checkJigsawReturn(){
+  try{
+    if(localStorage.getItem('tb_hunt_jigsaw_done')==='1' && ST['heartjigsaw'] && ST['heartjigsaw'].status!=='solved'){
+      localStorage.removeItem('tb_hunt_jigsaw_done');
+      const st=ST['heartjigsaw'];st.earned=20;st.status='solved';score+=20;
+      if(ST['bypass'] && ST['bypass'].status==='locked')ST['bypass'].status='open';
+      save();renderMain();
+      showUnlock(byId['bypass'].unlockMsg,'bypass');
+    }
+  }catch(e){}
 }
 function save(){try{localStorage.setItem('tb_hunt',JSON.stringify({ST,score}));}catch(e){}}
 function resetGame(){if(confirm('Start over and clear your score?')){fresh();save();renderMain();}}
@@ -177,8 +193,9 @@ function renderMain(){
       el.onclick=()=>showToast('Already solved - nice work!');
     }else{
       el.className='qtile oct-18';
-      el.innerHTML='<div class="in"><span class="stag">'+q.cat+'</span><div class="qt">'+esc(shortQ(q))+'</div></div>';
-      el.onclick=()=>openQ(q.id);
+      const label=q.type==='jigsaw'?'&#129513; '+esc(shortQ(q)):esc(shortQ(q));
+      el.innerHTML='<div class="in"><span class="stag">'+(q.type==='jigsaw'?'Puzzle':q.cat)+'</span><div class="qt">'+label+'</div></div>';
+      el.onclick=()=> q.type==='jigsaw'? startJigsaw() : openQ(q.id);
     }
     g.appendChild(el);
   });
@@ -271,7 +288,7 @@ function showUnlock(msg,openId){
   setTimeout(()=>{u.classList.remove('show');openQ(openId);},3000);
 }
 
-load();renderMain();
+load();renderMain();checkJigsawReturn();
 </script>
 </body>
 </html>

@@ -123,13 +123,18 @@ function vCB(height,type){const w=-height,h=-height*0.25*type;return `l 0 ${w*0.
 
 /* ===== engine with pan/zoom ===== */
 const IMG='assets/heart.jpg';
-let N=3,imgRatio=0.78,pieces=[];
+const HUNT=new URLSearchParams(location.search).get('hunt')==='1';
+let N=HUNT?4:3,imgRatio=0.78,pieces=[];
 let boardW=300,boardH=385,pieceW=100,pieceH=128,PAD=128,boardX=0,boardY=0,worldW=0,worldH=0;
 let zoom=1,panX=0,panY=0,minZoom=0.3;
 let solved=false,started=false,t0=0,timerInt=null;
 const stage=()=>document.getElementById('stage');
 const world=()=>document.getElementById('world');
 
+if(HUNT){window.addEventListener('DOMContentLoaded',function(){
+  var d=document.querySelector('.diff');if(d)d.style.display='none';
+  var s=document.querySelector('.hsub');if(s)s.textContent='Assemble the photo to unlock the heart questions. Pinch or +/- to zoom, drag empty space to pan.';
+});}
 (function(){const im=new Image();im.onload=function(){imgRatio=im.naturalWidth/im.naturalHeight;build();};im.onerror=build;im.src=IMG;})();
 
 function setDiff(n){N=n;document.querySelectorAll('.diff button').forEach(b=>b.classList.toggle('on',+b.dataset.n===n));build();}
@@ -273,6 +278,8 @@ function solveDemo(){pieces.forEach(p=>{placePiece(p,boardX+p.x,boardY+p.y);p.lo
   const el=document.getElementById('pc'+p.id);el.classList.add('locked');el.style.zIndex=2;el.style.filter='none';});
   document.getElementById('cnt').textContent=pieces.length;winNow();}
 function winNow(){solved=true;clearInterval(timerInt);world().classList.add('solved');document.getElementById('win').classList.add('show');
+  if(HUNT){try{localStorage.setItem('tb_hunt_jigsaw_done','1');}catch(e){}
+    showToast('Solved! Returning to the hunt...');setTimeout(()=>{location.href='hunt.html';},1600);return;}
   showToast('Solved in '+document.getElementById('timer').textContent+'! (sample)');}
 function resetTimer(){started=false;clearInterval(timerInt);t0=0;document.getElementById('timer').textContent='0:00';}
 function tick(){const s=Math.floor((Date.now()-t0)/1000),m=Math.floor(s/60),ss=('0'+(s%60)).slice(-2);document.getElementById('timer').textContent=m+':'+ss;}
