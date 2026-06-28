@@ -105,6 +105,10 @@ footer{margin-top:24px;}
   cursor:pointer;font-size:2rem;line-height:1;color:#fff;display:flex;align-items:center;justify-content:center;
   background:var(--accent);box-shadow:0 4px 16px rgba(0,0,0,.55);}
 .cambtn:active{transform:scale(.95);}
+.galbtn{position:fixed;right:92px;bottom:20px;z-index:55;width:60px;height:60px;border:3px solid rgba(255,255,255,.7);border-radius:50%;
+  cursor:pointer;font-size:1.55rem;line-height:1;color:#fff;display:flex;align-items:center;justify-content:center;
+  background:var(--bg3);box-shadow:0 4px 14px rgba(0,0,0,.5);}
+.galbtn:active{transform:scale(.95);}
 .camprev{position:fixed;inset:0;z-index:75;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(10,12,16,.95);}
 .camprev.show{display:flex;}
 .camprev .cpcard{max-width:34ch;width:100%;text-align:center;}
@@ -159,8 +163,10 @@ footer{margin-top:24px;}
 </section>
 
 <!-- camera (album) -->
-<button class="cambtn" id="cambtn" onclick="openCam()" title="Add a photo to the album">&#128247;</button>
+<button class="cambtn" id="cambtn" onclick="openCam()" title="Take a photo for the album">&#128247;</button>
 <input type="file" id="camInput" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(event)" />
+<button class="galbtn" onclick="openGallery()" title="Upload a photo you already took">&#128444;&#65039;</button>
+<input type="file" id="galInput" accept="image/*" style="display:none" onchange="onPhoto(event)" />
 <div class="camprev" id="camprev"><div class="cpcard">
   <div class="cph">Add to the album</div>
   <img id="camImg" alt="your photo" />
@@ -410,6 +416,7 @@ function showUnlock(msg,openId){
 /* ===== camera / album ===== */
 let camData=null;
 function openCam(){document.getElementById('camInput').click();}
+function openGallery(){document.getElementById('galInput').click();}
 function onPhoto(ev){const f=ev.target.files&&ev.target.files[0];ev.target.value='';if(!f)return;
   const rd=new FileReader();
   rd.onload=function(){const img=new Image();
