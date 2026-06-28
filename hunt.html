@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Dr. Hemenway's 80th — Scavenger Hunt</title>
+<link rel="stylesheet" href="assets/tb.css" />
+<style>
+.screen{display:none;}.screen.active{display:block;}
+.scorebar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 12px;
+  background:var(--bg3);border:1px solid var(--border);padding:10px 14px;
+  clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);}
+.scorebar .sc{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);font-weight:800;}
+.scorebar .pts{font-size:1.5rem;font-weight:900;color:var(--red-light);text-shadow:0 0 12px var(--red-glow);}
+.scorebar .prog{font-size:.7rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.qtile{background:var(--frame-border);padding:2.5px;cursor:pointer;transition:filter .15s,transform .1s;position:relative;}
+.qtile:hover{filter:brightness(1.08);}.qtile:active{transform:scale(.98);}
+.qtile .in{background:var(--bg2);padding:13px 12px 15px;min-height:112px;display:flex;flex-direction:column;
+  clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 15px,100% calc(100% - 15px),calc(100% - 15px) 100%,15px 100%,0 calc(100% - 15px),0 15px);}
+.qtile.solved{background:linear-gradient(145deg,#86efac,#22c55e 45%,#15803d);}
+.qtile.locked{background:var(--border);cursor:not-allowed;filter:grayscale(.5) brightness(.7);}
+.qtile.locked .in{filter:blur(1.5px);opacity:.75;}
+.qtile .stag{display:inline-block;align-self:flex-start;font-size:.56rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  color:#fff;background:var(--accent);padding:2px 8px;margin-bottom:8px;
+  clip-path:polygon(4px 0,calc(100% - 4px) 0,100% 4px,100% calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,0 calc(100% - 4px),0 4px);}
+.qtile .qt{font-size:.84rem;font-weight:600;color:var(--text);line-height:1.22;}
+.qtile.solved .qt{color:#0a2a12;}.qtile.solved .stag{background:rgba(255,255,255,.85);color:#0a2a12;}
+.qtile .pill{position:absolute;top:7px;right:9px;font-size:.62rem;font-weight:800;}
+.qtile.solved .pill{color:#0a3d18;}
+.qtile .lockico{position:absolute;top:7px;right:9px;font-size:.8rem;}
+/* question screen */
+.qhead{font-size:1.3rem;font-weight:700;margin-bottom:4px;}
+.qsub{color:var(--text-dim);font-size:.86rem;margin-bottom:6px;}
+.qcat{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--red-light);margin-bottom:8px;}
+.opt{display:block;width:100%;background:var(--border);padding:2px;cursor:pointer;margin-top:10px;transition:filter .12s;}
+.opt:hover{filter:brightness(1.14);}
+.opt .oin{background:var(--bg3);color:var(--text);padding:13px 15px;font-size:.95rem;font-weight:600;display:flex;align-items:center;gap:10px;
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);}
+.opt .box{width:20px;height:20px;flex:0 0 20px;border:2px solid var(--text-muted);}
+.opt.pickone .box{clip-path:circle(50%);}
+.opt.sel{background:var(--accent);}.opt.sel .oin{color:#fff;background:transparent;font-weight:800;}.opt.sel .box{border-color:#fff;background:#fff;}
+.opt.dis{filter:grayscale(1) brightness(.5);cursor:not-allowed;pointer-events:none;}
+.opt.dis .oin{text-decoration:line-through;color:var(--text-muted);}
+.slid-val{text-align:center;margin:18px 0 4px;}
+.slid-val .num{font-size:3.2rem;font-weight:800;color:var(--red-light);line-height:1;text-shadow:0 0 16px var(--red-glow);}
+.slid-val .unit{display:block;font-size:.76rem;text-transform:uppercase;letter-spacing:.14em;color:var(--text-dim);margin-top:3px;}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:10px;background:var(--bg3);outline:none;margin:16px 0 6px;
+  clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:30px;height:30px;cursor:pointer;background:var(--accent);box-shadow:0 0 0 3px var(--bg2),0 2px 6px rgba(0,0,0,.5);}
+input[type=range]::-moz-range-thumb{width:30px;height:30px;border:none;cursor:pointer;background:var(--accent);box-shadow:0 0 0 3px var(--bg2);}
+.slid-ends{display:flex;justify-content:space-between;font-size:.74rem;color:var(--text-muted);font-weight:700;}
+/* result overlay */
+.result{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;
+  background:rgba(10,12,16,.92);}
+.result.show{display:flex;}
+.result .big{font-size:2.2rem;font-weight:900;letter-spacing:.02em;margin-bottom:8px;}
+.result.ok .big{color:#22c55e;text-shadow:0 0 24px rgba(34,197,94,.5);}
+.result.no .big{color:var(--red-light);text-shadow:0 0 24px var(--red-glow);}
+.result .msg{font-size:1.05rem;color:var(--text);max-width:24ch;margin-bottom:6px;}
+.result .earn{font-size:1.3rem;font-weight:800;color:var(--red-light);margin-top:4px;}
+.result .rbtns{display:flex;gap:12px;margin-top:22px;}
+.result .rbtns .btn-frame,.result .rbtns .btn-ghost-frame{margin-top:0;width:auto;}
+.result .rbtns .btn,.result .rbtns .btn-ghost{padding:13px 26px;}
+/* unlock popup */
+.unlock{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;text-align:center;padding:28px;
+  background:rgba(10,12,16,.95);}
+.unlock.show{display:flex;}
+.unlock .ui{max-width:30ch;}
+.unlock .key{font-size:2.6rem;margin-bottom:10px;}
+.unlock .ut{font-size:1.25rem;font-weight:800;color:#fff;line-height:1.3;}
+.unlock .us{margin-top:12px;font-size:.8rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.1em;}
+.barrow{display:flex;justify-content:flex-end;margin-top:14px;}
+.minireset{background:none;border:none;color:var(--text-muted);font-size:.7rem;cursor:pointer;text-decoration:underline;}
+footer{margin-top:24px;}
+</style>
+</head>
+<body>
+<div class="toprow">
+  <span class="brandmini">Time Bandit Entertainment</span>
+  <span class="theme-toggle oct-8" onclick="toggleTheme()"><button class="inner oct-8" id="themeBtn">Daylight</button></span>
+</div>
+<header class="hdr">
+  <img class="charL" src="assets/adventurer.png" alt="Time Bandit adventurer" />
+  <div class="htitle"><div class="kicker">Scavenger Hunt</div>
+    <h1>Dr. Hemenway's <span class="age">80th</span></h1></div>
+  <img class="charR" src="assets/girl.png" alt="Adventurer" />
+</header>
+<nav class="gamenav">
+  <a href="hunt.html" class="on">Hunt</a>
+  <a href="bingo.html">Bingo</a>
+  <a href="jigsaw.html">Jigsaw</a>
+  <a href="index.html">Menu</a>
+</nav>
+
+<!-- MAIN -->
+<section class="screen active" id="screen-main">
+  <div class="scorebar">
+    <div><div class="sc">Your Score</div><div class="pts" id="score">0</div></div>
+    <div class="prog" id="prog">0 of 0 solved</div>
+  </div>
+  <div class="qgrid" id="qgrid"></div>
+  <div class="barrow"><button class="minireset" onclick="resetGame()">Reset my game</button></div>
+  <footer>Dr. Merritt Hemenway's 80th &amp; Retirement · Time Bandit Entertainment</footer>
+</section>
+
+<!-- QUESTION -->
+<section class="screen" id="screen-q">
+  <button class="back" onclick="toMain()">&lsaquo; Back to puzzles</button>
+  <div class="frame oct-18"><div class="body" id="qbody"></div></div>
+  <span class="btn-frame oct-10"><button class="btn oct-9" id="submitBtn" onclick="submitQ()">Submit Answer</button></span>
+</section>
+
+<!-- result + unlock overlays -->
+<div class="result" id="result"><div id="resultInner"></div></div>
+<div class="unlock" id="unlock"><div class="ui">
+  <div class="key">&#128273;</div>
+  <div class="ut" id="unlockText"></div>
+  <div class="us">Bonus puzzle unlocked</div>
+</div></div>
+
+<script src="assets/tb.js"></script>
+<script>
+/* ===== questions ===== */
+const Q=[
+ {id:'bypass',cat:'Family',type:'choice',q:"Who led Merritt's quadruple bypass surgery?",options:['Dr. Pong','Dr. Wong','Dr. Sami Hayack','Dr. Reyes'],ans:0,open:true,unlocks:'cardio'},
+ {id:'cardio',cat:'Family',type:'choice',q:"Who is Merritt's cardiologist?",options:['Dr. Sami Hayack','Dr. Pong','Dr. Ellen Cho','Dr. Raymond Patel'],ans:0,
+   unlockMsg:'Solved with surgical precision! Now meet the doctor who keeps his heart running.'},
+ {id:'phd',cat:'Family',type:'slider',q:'How many years did it take Merritt to finish his PhD?',sub:'Acceptance to completion - land within range to score.',min:0,max:25,start:5,unit:'years',ans:13,tol:1,open:true,unlocks:'favteacher'},
+ {id:'favteacher',cat:'Family',type:'choice',q:'Merritt was a student for over 20 years. Who was his favorite teacher ever?',options:['Dr. David Drew','Fr. Daniel Moore','Sr. Catherine Ames','Dr. Alan Pearce'],ans:0,
+   unlockMsg:'13 years a student - so who was HIS favorite teacher ever?'},
+ {id:'televised',cat:'Amat',type:'select',q:'Which schools had televised announcements?',sub:'Pick all that apply.',options:['Bishop Amat','CSHM','Santa Margarita','Damien','Cantwell'],ans:[0,1,2],open:true,unlocks:'award'},
+ {id:'award',cat:'Family',type:'choice',q:'The Lead, Learn, Proclaim Award Merritt won was given by what institution?',options:['National Catholic Education Association','Diocese of Los Angeles','U.S. Department of Education','National Honor Society'],ans:0,
+   unlockMsg:'From the morning announcements to the national stage - here is his big award.'},
+ {id:'firstkairos',cat:'Kairos',type:'slider',q:'How many seniors were on Merritt’s very first Kairos?',sub:'Get within range to score.',min:0,max:30,start:8,unit:'seniors',ans:12,tol:1,open:true,unlocks:'kairosloc'},
+ {id:'kairosloc',cat:'Kairos',type:'choice',q:'Where were Kairos retreats 1, 2, and 3 held?',options:['Mission San Luis Rey, Oceanside','Mission San Juan Capistrano','Santa Margarita Retreat House','Big Bear Lodge'],ans:0,
+   unlockMsg:'You nailed the first Kairos - now, where were 1, 2, and 3 held?'},
+ {id:'lastclass',cat:'Family',type:'choice',q:'Not counting 3 weeks subbing Psychology at Cantwell, what was the last class Merritt taught?',options:['Christian Vocations (Marriage)','AP Theology','World Religions','Church History'],ans:0,open:true,unlocks:'movies'},
+ {id:'movies',cat:'Family',type:'slider',q:'How many full-length movies has Merritt appeared in?',min:0,max:10,start:3,unit:'movies',ans:2,tol:0,
+   unlockMsg:'Class dismissed! On to the bright lights - how many movies has he been in?'},
+ {id:'trees',cat:'Kairos',type:'choice',q:'What trees grow on the grounds of the second home of Santa Margarita Kairos?',options:['Avocado','Orange','Olive','Almond'],ans:0,open:true,unlocks:'helpedstart'},
+ {id:'helpedstart',cat:'Kairos',type:'select',q:'Which schools did Merritt help start Kairos retreats at?',sub:'Pick all that apply.',options:['Bishop Amat','Cantwell','St. Genevieve','Texas','Damien','CSHM'],ans:[0,1,2,3],
+   unlockMsg:'From the avocado grove to the movement itself - which schools helped start Kairos?'}
+];
+const byId={};Q.forEach(q=>byId[q.id]=q);
+const WRONGLINES=[
+ "Sorry, that's not quite right.","Ooh - so close, but no.","Not this time!","Swing and a miss.",
+ "That's not the one.","Afraid not.","Good guess, but not it.","Hmm, not quite.","Nope - not the answer.","Close, but no cigar."
+];
+
+/* ===== state ===== */
+let ST={},score=0,cur=null,draft=null;
+function fresh(){ST={};Q.forEach(q=>ST[q.id]={status:q.open?'open':'locked',attempts:0,earned:0,wrong:[]});score=0;}
+function load(){
+  try{const s=localStorage.getItem('tb_hunt');if(s){const o=JSON.parse(s);ST=o.ST;score=o.score;return;}}catch(e){}
+  fresh();
+}
+function save(){try{localStorage.setItem('tb_hunt',JSON.stringify({ST,score}));}catch(e){}}
+function resetGame(){if(confirm('Start over and clear your score?')){fresh();save();renderMain();}}
+function ptsFor(att){return att<=0?20:att===1?10:5;}
+
+/* ===== main grid ===== */
+function renderMain(){
+  document.getElementById('score').textContent=score;
+  const solved=Q.filter(q=>ST[q.id].status==='solved').length;
+  document.getElementById('prog').textContent=solved+' of '+Q.length+' solved';
+  const g=document.getElementById('qgrid');g.innerHTML='';
+  Q.forEach(q=>{
+    const st=ST[q.id];const el=document.createElement('div');
+    if(st.status==='locked'){
+      el.className='qtile oct-18 locked';
+      el.innerHTML='<div class="in"><span class="lockico">&#128274;</span><span class="stag">Locked</span><div class="qt">Solve puzzles to reveal this bonus.</div></div>';
+      el.onclick=()=>showToast('Locked - solve other puzzles to reveal it.');
+    }else if(st.status==='solved'){
+      el.className='qtile oct-18 solved';
+      el.innerHTML='<div class="in"><span class="pill">+'+st.earned+'</span><span class="stag">'+q.cat+'</span><div class="qt">'+esc(shortQ(q))+'</div></div>';
+      el.onclick=()=>showToast('Already solved - nice work!');
+    }else{
+      el.className='qtile oct-18';
+      el.innerHTML='<div class="in"><span class="stag">'+q.cat+'</span><div class="qt">'+esc(shortQ(q))+'</div></div>';
+      el.onclick=()=>openQ(q.id);
+    }
+    g.appendChild(el);
+  });
+}
+function shortQ(q){return q.q.length>62?q.q.slice(0,60)+'...':q.q;}
+function esc(s){return(s+'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toMain(){document.getElementById('screen-q').classList.remove('active');document.getElementById('screen-main').classList.add('active');renderMain();window.scrollTo(0,0);}
+
+/* ===== question screen ===== */
+function openQ(id){
+  cur=id;draft=null;const q=byId[id],st=ST[id],b=document.getElementById('qbody');
+  let h='<div class="qcat">'+q.cat+'</div><div class="qhead">'+esc(q.q)+'</div>';
+  if(q.sub)h+='<div class="qsub">'+esc(q.sub)+'</div>';
+  if(q.type==='slider'){
+    draft=q.start;
+    h+='<div class="slid-val"><span class="num" id="sv">'+q.start+'</span><span class="unit">'+q.unit+'</span></div>';
+    h+='<input type="range" min="'+q.min+'" max="'+q.max+'" value="'+q.start+'" oninput="onSlide(this.value)" />';
+    h+='<div class="slid-ends"><span>'+q.min+'</span><span>'+q.max+'</span></div>';
+  }else if(q.type==='choice'){
+    q.options.forEach((o,k)=>{const dis=st.wrong.indexOf(k)>-1;
+      h+='<div class="opt pickone'+(dis?' dis':'')+'" '+(dis?'':'onclick="pickOne('+k+')"')+'><div class="oin oct-8"><span class="box"></span>'+esc(o)+'</div></div>';});
+  }else if(q.type==='select'){
+    draft=[];
+    q.options.forEach((o,k)=>{h+='<div class="opt" onclick="toggleSel('+k+')"><div class="oin oct-8"><span class="box"></span>'+esc(o)+'</div></div>';});
+  }
+  b.innerHTML=h;
+  updateSubmit();
+  document.getElementById('screen-main').classList.remove('active');document.getElementById('screen-q').classList.add('active');window.scrollTo(0,0);
+}
+function onSlide(v){draft=parseInt(v,10);document.getElementById('sv').textContent=v;updateSubmit();}
+function pickOne(k){draft=k;document.querySelectorAll('#qbody .opt').forEach((el,i)=>{if(!el.classList.contains('dis'))el.classList.toggle('sel',i===k);});updateSubmit();}
+function toggleSel(k){if(!Array.isArray(draft))draft=[];const p=draft.indexOf(k);if(p>-1)draft.splice(p,1);else draft.push(k);
+  document.querySelectorAll('#qbody .opt')[k].classList.toggle('sel',draft.indexOf(k)>-1);updateSubmit();}
+function updateSubmit(){const q=byId[cur];let ok=false;
+  if(q.type==='slider')ok=true;
+  else if(q.type==='choice')ok=draft!==null&&draft!==undefined;
+  else if(q.type==='select')ok=Array.isArray(draft)&&draft.length>0;
+  document.getElementById('submitBtn').disabled=!ok;}
+
+/* ===== submit / evaluate ===== */
+function isRight(q){
+  if(q.type==='slider')return Math.abs(draft-q.ans)<=(q.tol||0);
+  if(q.type==='choice')return draft===q.ans;
+  if(q.type==='select'){if(!Array.isArray(draft)||draft.length!==q.ans.length)return false;
+    const a=[...draft].sort((x,y)=>x-y),b=[...q.ans].sort((x,y)=>x-y);return a.every((v,i)=>v===b[i]);}
+  return false;
+}
+function submitQ(){
+  const q=byId[cur],st=ST[cur];
+  if(isRight(q)){
+    const earned=ptsFor(st.attempts);st.earned=earned;st.status='solved';score+=earned;save();
+    let reveal='';
+    if(q.type==='slider')reveal=' The answer is '+q.ans+'.';
+    showResult('ok','Correct!',reveal,'+'+earned+' points',null);
+    // unlock?
+    let nextOpen=null;
+    if(q.unlocks && ST[q.unlocks] && ST[q.unlocks].status==='locked'){ST[q.unlocks].status='open';save();nextOpen=q.unlocks;}
+    setTimeout(()=>{
+      hideResult();
+      if(nextOpen){showUnlock(byId[nextOpen].unlockMsg, nextOpen);}
+      else toMain();
+    },1500);
+  }else{
+    st.attempts++;
+    if(q.type==='choice'&&draft!=null&&st.wrong.indexOf(draft)<0)st.wrong.push(draft);
+    save();
+    const line=WRONGLINES[Math.floor((st.attempts+cur.length)%WRONGLINES.length)];
+    const nextPts=ptsFor(st.attempts);
+    showResult('no',line,'Want to try again for '+nextPts+' points?','',
+      [{t:'Try again',f:()=>{hideResult();openQ(cur);},primary:true},{t:'Back to puzzles',f:()=>{hideResult();toMain();}}]);
+  }
+}
+function showResult(kind,big,msg,earn,btns){
+  const r=document.getElementById('result');r.className='result '+kind+' show';
+  let h='<div class="big">'+esc(big)+'</div>';
+  if(msg)h+='<div class="msg">'+esc(msg)+'</div>';
+  if(earn)h+='<div class="earn">'+esc(earn)+'</div>';
+  if(btns){h+='<div class="rbtns" id="rbtns"></div>';}
+  document.getElementById('resultInner').innerHTML=h;
+  if(btns){const c=document.getElementById('rbtns');
+    btns.forEach((b,i)=>{const w=document.createElement('span');
+      w.className=b.primary?'btn-frame oct-10':'btn-ghost-frame oct-8';
+      w.innerHTML=b.primary?'<button class="btn oct-9">'+esc(b.t)+'</button>':'<button class="btn-ghost oct-8">'+esc(b.t)+'</button>';
+      w.querySelector('button').onclick=b.f;c.appendChild(w);});}
+}
+function hideResult(){document.getElementById('result').classList.remove('show');}
+function showUnlock(msg,openId){
+  document.getElementById('unlockText').textContent=msg;
+  const u=document.getElementById('unlock');u.classList.add('show');
+  setTimeout(()=>{u.classList.remove('show');openQ(openId);},3000);
+}
+
+load();renderMain();
+</script>
+</body>
+</html>
