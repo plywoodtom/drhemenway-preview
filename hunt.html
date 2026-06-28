@@ -173,7 +173,7 @@ const WRONGLINES=[
 ];
 
 /* ===== leaderboard (paste the Cloudflare Worker URL below) ===== */
-const LB_URL=""; // e.g. https://hemenway-leaderboard.NAME.workers.dev
+const LB_URL="https://hemenway-leaderboard.plywoodtom.workers.dev";
 function isLB(){return /^https?:\/\//.test(LB_URL);}
 function getName(){try{return localStorage.getItem('tb_hunt_name')||'';}catch(e){return'';}}
 function setNm(n){try{localStorage.setItem('tb_hunt_name',n);}catch(e){}}
