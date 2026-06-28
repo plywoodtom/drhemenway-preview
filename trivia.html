@@ -123,11 +123,11 @@ const QS=[
  {type:'choice',tile:'Who gave the Lead, Learn, Proclaim award?',q:'The Lead, Learn, Proclaim Award Merritt won was given by which institution?',options:['National Catholic Education Association','Diocese of Los Angeles','U.S. Department of Education','National Honor Society']},
  {type:'slider',tile:'Seniors on his first Kairos?',q:'How many seniors were on Merritt’s very first Kairos retreat?',sub:'Get within range to score.',min:0,max:30,start:8,unit:'seniors',tol:1},
  {type:'choice',tile:'Where were Kairos 1-2-3 held?',q:'Where were Kairos retreats 1, 2, and 3 held?',options:['Mission San Luis Rey, Oceanside','Mission San Juan Capistrano','Santa Margarita Retreat House','Big Bear Lodge']},
- {type:'match',tile:'Match the people to their roles',q:'Match each person to their role in Merritt’s life.',left:['Dr. Wong','Dr. Sami Hayack','Dr. David Drew'],right:['Led the bypass','His cardiologist','Favorite teacher']}
+ {type:'match',tile:'Match the people to their roles',q:'Match each person to their role in Merritt’s life.',left:['Dr. Pong','Dr. Sami Hayack','Dr. David Drew'],right:['Led the bypass','His cardiologist','Favorite teacher']}
 ];
 const answers={};const checkedState={};let cur=-1,draft=null;
 /* sample answer key (the real game pulls this from your dad's key) */
-const KEY={0:13,1:0,2:2,3:[0,1,2],4:0,5:12,6:0,7:{0:0,1:1,2:2}};
+const KEY={0:13,1:1,2:2,3:[0,1,2],4:0,5:12,6:0,7:{0:0,1:1,2:2}};
 function revealOf(i){const q=QS[i],k=KEY[i];
   if(q.type==='slider')return k+' '+q.unit;
   if(q.type==='choice')return q.options[k];
