@@ -93,8 +93,13 @@ footer{margin-top:24px;}
 .namegate h2{font-size:1.6rem;margin:6px 0 10px;}
 .namegate h2 .age{color:var(--red);}
 .namegate p{color:var(--text-dim);font-size:.92rem;margin-bottom:16px;}
-.namegate input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:13px 14px;font-size:1rem;text-align:center;outline:none;margin-bottom:4px;
+.namegate input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:12px 14px;font-size:.98rem;text-align:center;outline:none;margin-bottom:8px;
   clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);}
+.namegate .optq{font-size:.74rem;color:var(--text-dim);font-weight:700;margin:8px 0 6px;text-transform:uppercase;letter-spacing:.06em;}
+.namegate .optrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px;}
+.namegate .optb{background:var(--bg3);border:1px solid var(--border);color:var(--text-dim);font-weight:700;font-size:.74rem;padding:10px 4px;cursor:pointer;
+  clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px);}
+.namegate .optb.sel{background:var(--accent);color:#fff;border-color:transparent;}
 </style>
 </head>
 <body>
@@ -146,8 +151,16 @@ footer{margin-top:24px;}
 <div class="namegate" id="namegate"><div class="ngcard">
   <div class="ngk">Welcome</div>
   <h2>Dr. Hemenway's <span class="age">80th</span></h2>
-  <p>Enter your name to start the scavenger hunt and join the leaderboard.</p>
-  <input id="ngInput" placeholder="Your name" maxlength="24" />
+  <p>Tell us who you are to start the hunt and join the leaderboard.</p>
+  <input id="ngName" placeholder="Your name" maxlength="24" />
+  <input id="ngUser" placeholder="Username for the leaderboard (optional)" maxlength="20" />
+  <input id="ngEmail" type="email" placeholder="Email for the photo album (optional)" maxlength="80" />
+  <div class="optq">Send you the photo album link after the party?</div>
+  <div class="optrow">
+    <button class="optb" data-opt="yes" onclick="pickOpt(this)">Yes</button>
+    <button class="optb" data-opt="later" onclick="pickOpt(this)">Ask later</button>
+    <button class="optb" data-opt="no" onclick="pickOpt(this)">No thanks</button>
+  </div>
   <span class="btn-frame oct-10"><button class="btn oct-9" onclick="saveNameGate()">Start Playing</button></span>
 </div></div>
 
@@ -193,22 +206,38 @@ const WRONGLINES=[
 /* ===== leaderboard (paste the Cloudflare Worker URL below) ===== */
 const LB_URL="https://hemenway-leaderboard.plywoodtom.workers.dev";
 function isLB(){return /^https?:\/\//.test(LB_URL);}
-function getName(){try{return localStorage.getItem('tb_hunt_name')||'';}catch(e){return'';}}
-function setNm(n){try{localStorage.setItem('tb_hunt_name',n);}catch(e){}}
+function lsGet(k){try{return localStorage.getItem(k)||'';}catch(e){return'';}}
+function getReal(){return lsGet('tb_hunt_name');}
+function getUser(){return lsGet('tb_hunt_user');}
+function getEmail(){return lsGet('tb_hunt_email');}
+function getOptin(){return lsGet('tb_hunt_optin');}
+function getName(){return getUser()||getReal();} /* leaderboard display name */
+function setProfile(name,user,email,optin){try{localStorage.setItem('tb_hunt_name',name);localStorage.setItem('tb_hunt_user',user||'');localStorage.setItem('tb_hunt_email',email||'');localStorage.setItem('tb_hunt_optin',optin||'');}catch(e){}}
+let optChoice='';
+function pickOpt(b){optChoice=b.dataset.opt;document.querySelectorAll('.namegate .optb').forEach(x=>x.classList.toggle('sel',x===b));}
 function renderNameBar(){
-  const el=document.getElementById('namebar');if(!el)return;const n=getName();
-  if(n){el.innerHTML='Playing as <b style="color:var(--text)">'+esc(n)+'</b> <button class="lnk" onclick="editName()">change</button>';el.className='namebar';}
-  else{el.className='namebar';el.innerHTML='<input id="nameIn" placeholder="Your name for the leaderboard" maxlength="24"/><button class="join" onclick="saveName()">Join</button>';}
+  const el=document.getElementById('namebar');if(!el)return;el.className='namebar';
+  if(getReal())el.innerHTML='Playing as <b style="color:var(--text)">'+esc(getName())+'</b> <button class="lnk" onclick="showNameGate()">change</button>';
+  else el.innerHTML='<button class="lnk" onclick="showNameGate()">Tap to enter your name and join the leaderboard</button>';
 }
-function saveName(){const i=document.getElementById('nameIn');const v=i?i.value.trim():'';if(!v)return;setNm(v);renderNameBar();postScore();}
-function editName(){setNm('');renderNameBar();showNameGate();}
 function showNameGate(){const g=document.getElementById('namegate');g.classList.add('show');
-  const i=document.getElementById('ngInput');if(i){i.value=getName();setTimeout(()=>i.focus(),60);
-    i.onkeydown=function(e){if(e.key==='Enter')saveNameGate();};}}
-function saveNameGate(){const i=document.getElementById('ngInput');const v=i?i.value.trim():'';if(!v){if(i)i.focus();return;}
-  setNm(v);document.getElementById('namegate').classList.remove('show');renderNameBar();postScore();}
+  const n=document.getElementById('ngName');if(n){n.value=getReal();setTimeout(()=>n.focus(),60);n.onkeydown=function(e){if(e.key==='Enter')saveNameGate();};}
+  const u=document.getElementById('ngUser');if(u)u.value=getUser();
+  const e=document.getElementById('ngEmail');if(e)e.value=getEmail();
+  optChoice=getOptin();document.querySelectorAll('.namegate .optb').forEach(x=>x.classList.toggle('sel',x.dataset.opt===optChoice));
+}
+function saveNameGate(){
+  const name=(document.getElementById('ngName').value||'').trim();
+  if(!name){document.getElementById('ngName').focus();return;}
+  const user=(document.getElementById('ngUser').value||'').trim();
+  const email=(document.getElementById('ngEmail').value||'').trim();
+  setProfile(name,user,email,optChoice);
+  document.getElementById('namegate').classList.remove('show');renderNameBar();postScore();postSignup();
+}
 function postScore(){if(!isLB())return;const n=getName();if(!n)return;
   try{fetch(LB_URL.replace(/\/$/,'')+'/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,score:score})});}catch(e){}}
+function postSignup(){if(!isLB()||!getReal())return;
+  try{fetch(LB_URL.replace(/\/$/,'')+'/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:getReal(),username:getUser(),email:getEmail(),optin:getOptin()})});}catch(e){}}
 function openLB(){if(!isLB()){showToast('The leaderboard turns on once the host links it.');return;}
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-lb').classList.add('active');loadLB();window.scrollTo(0,0);}
 function loadLB(){const box=document.getElementById('lbList');box.innerHTML='<div class="dim center">Loading...</div>';
