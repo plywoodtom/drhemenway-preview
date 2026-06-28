@@ -14,6 +14,19 @@
 .cardlink h3{font-size:1.25rem;margin-bottom:6px;}
 .cardlink p{color:var(--text-dim);font-size:.92rem;}
 .play{margin-top:13px;color:var(--red-light);font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:.78rem;}
+.camcard{text-align:center;}
+.camcard .play{cursor:pointer;}
+.cambtn{position:fixed;right:16px;bottom:18px;z-index:55;width:66px;height:66px;border:3px solid rgba(255,255,255,.9);border-radius:50%;
+  cursor:pointer;font-size:2rem;line-height:1;color:#fff;display:flex;align-items:center;justify-content:center;
+  background:var(--accent);box-shadow:0 4px 16px rgba(0,0,0,.55);}
+.cambtn:active{transform:scale(.95);}
+.camprev{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(10,12,16,.95);}
+.camprev.show{display:flex;}
+.camprev .cpcard{max-width:34ch;width:100%;text-align:center;}
+.camprev .cph{font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--red-light);font-size:.74rem;margin-bottom:10px;}
+.camprev img{width:100%;height:auto;max-height:46vh;object-fit:contain;border:2px solid var(--border);margin-bottom:10px;background:#000;}
+.camprev input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:11px 13px;font-size:.95rem;text-align:center;outline:none;margin-bottom:8px;
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);}
 </style>
 </head>
 <body>
@@ -32,6 +45,15 @@
 </header>
 <p class="hsub">Rough layouts to look over. Tap any one to try it.</p>
 <div class="note">Work in progress — points, winners, and polish come later.</div>
+
+<div class="frame oct-18 cardlink camcard" onclick="openCam()">
+  <div class="body">
+    <span class="tag">Photo Album</span>
+    <h3>Add a Photo</h3>
+    <p>Snap a picture for the live album on the big screen - no sign-in needed.</p>
+    <div class="play">Open the camera &rsaquo;</div>
+  </div>
+</div>
 
 <a class="frame oct-18 cardlink" href="hunt.html">
   <div class="body">
@@ -70,6 +92,44 @@
 </a>
 
 <footer>Dr. Merritt Hemenway's 80th &amp; Retirement · Time Bandit Entertainment</footer>
+<button class="cambtn" onclick="openCam()" title="Add a photo to the album">&#128247;</button>
+<input type="file" id="camInput" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(event)" />
+<div class="camprev" id="camprev"><div class="cpcard">
+  <div class="cph">Add to the album</div>
+  <img id="camImg" alt="your photo" />
+  <input id="camCap" placeholder="Add a caption (optional)" maxlength="80" />
+  <span class="btn-frame oct-10"><button class="btn oct-9" onclick="sendPhoto()">Add to Album</button></span>
+  <span class="btn-ghost-frame oct-8"><button class="btn-ghost oct-8" onclick="closeCam()">Cancel</button></span>
+</div></div>
+
 <script src="assets/tb.js"></script>
+<script>
+const LB_URL="https://hemenway-leaderboard.plywoodtom.workers.dev";
+function isLB(){return /^https?:\/\//.test(LB_URL);}
+function camWho(){try{return localStorage.getItem('tb_hunt_user')||localStorage.getItem('tb_hunt_name')||'Guest';}catch(e){return 'Guest';}}
+let camData=null;
+function openCam(){document.getElementById('camInput').click();}
+function onPhoto(ev){const f=ev.target.files&&ev.target.files[0];ev.target.value='';if(!f)return;
+  const rd=new FileReader();
+  rd.onload=function(){const img=new Image();
+    img.onload=function(){const max=1280;let w=img.width,h=img.height;
+      if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
+      const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+      camData=c.toDataURL('image/jpeg',0.8);
+      document.getElementById('camImg').src=camData;document.getElementById('camCap').value='';
+      document.getElementById('camprev').classList.add('show');};
+    img.src=rd.result;};
+  rd.readAsDataURL(f);}
+function closeCam(){document.getElementById('camprev').classList.remove('show');camData=null;}
+function sendPhoto(){if(!camData)return;
+  const cap=(document.getElementById('camCap').value||'').trim();const who=camWho();
+  closeCam();
+  if(!isLB()){showToast('Photo captured (album link not set yet).');return;}
+  showToast('Adding to the album...');
+  fetch(LB_URL.replace(/\/$/,'')+'/photo',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:who,caption:cap,img:camData})})
+    .then(r=>showToast(r.ok?'Added to the album!':'Could not add - try again.'))
+    .catch(()=>showToast('Could not add - try again.'));}
+</script>
 </body>
 </html>
