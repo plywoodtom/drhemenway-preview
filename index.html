@@ -112,24 +112,25 @@ function openCam(){document.getElementById('camInput').click();}
 function onPhoto(ev){const f=ev.target.files&&ev.target.files[0];ev.target.value='';if(!f)return;
   const rd=new FileReader();
   rd.onload=function(){const img=new Image();
-    img.onload=function(){const max=1280;let w=img.width,h=img.height;
+    img.onload=function(){const max=1000;let w=img.width,h=img.height;
       if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
       const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
-      camData=c.toDataURL('image/jpeg',0.8);
+      camData=c.toDataURL('image/jpeg',0.72);
       document.getElementById('camImg').src=camData;document.getElementById('camCap').value='';
       document.getElementById('camprev').classList.add('show');};
     img.src=rd.result;};
   rd.readAsDataURL(f);}
 function closeCam(){document.getElementById('camprev').classList.remove('show');camData=null;}
+function postPhotoTry(who,cap,img,tries){
+  return fetch(LB_URL.replace(/\/$/,'')+'/photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:who,caption:cap,img})})
+    .then(r=>r.ok).catch(()=>false)
+    .then(ok=>(ok||tries<=0)?ok:new Promise(r=>setTimeout(r,900)).then(()=>postPhotoTry(who,cap,img,tries-1)));}
 function sendPhoto(){if(!camData)return;
   const cap=(document.getElementById('camCap').value||'').trim();const who=camWho();
-  closeCam();
-  if(!isLB()){showToast('Photo captured (album link not set yet).');return;}
+  if(!isLB()){closeCam();showToast('Photo captured (album link not set yet).');return;}
   showToast('Adding to the album...');
-  fetch(LB_URL.replace(/\/$/,'')+'/photo',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({name:who,caption:cap,img:camData})})
-    .then(r=>showToast(r.ok?'Added to the album!':'Could not add - try again.'))
-    .catch(()=>showToast('Could not add - try again.'));}
+  postPhotoTry(who,cap,camData,3).then(ok=>{ if(ok){closeCam();showToast('Added to the album!');}
+    else{showToast('Still no luck - check the wifi and tap Add to Album again.');} });}
 </script>
 </body>
 </html>
