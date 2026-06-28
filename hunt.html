@@ -86,6 +86,15 @@ footer{margin-top:24px;}
 .lbrow .nm{flex:1;font-weight:600;}
 .lbrow .sp{font-weight:800;}
 #screen-lb h2{text-align:center;margin:6px 0 14px;}
+.namegate{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(10,12,16,.97);}
+.namegate.show{display:flex;}
+.namegate .ngcard{max-width:30ch;text-align:center;width:100%;}
+.namegate .ngk{color:var(--red-light);font-weight:800;letter-spacing:.18em;text-transform:uppercase;font-size:.7rem;}
+.namegate h2{font-size:1.6rem;margin:6px 0 10px;}
+.namegate h2 .age{color:var(--red);}
+.namegate p{color:var(--text-dim);font-size:.92rem;margin-bottom:16px;}
+.namegate input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:13px 14px;font-size:1rem;text-align:center;outline:none;margin-bottom:4px;
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);}
 </style>
 </head>
 <body>
@@ -132,6 +141,15 @@ footer{margin-top:24px;}
   <div class="frame oct-18"><div class="body" id="qbody"></div></div>
   <span class="btn-frame oct-10"><button class="btn oct-9" id="submitBtn" onclick="submitQ()">Submit Answer</button></span>
 </section>
+
+<!-- name gate -->
+<div class="namegate" id="namegate"><div class="ngcard">
+  <div class="ngk">Welcome</div>
+  <h2>Dr. Hemenway's <span class="age">80th</span></h2>
+  <p>Enter your name to start the scavenger hunt and join the leaderboard.</p>
+  <input id="ngInput" placeholder="Your name" maxlength="24" />
+  <span class="btn-frame oct-10"><button class="btn oct-9" onclick="saveNameGate()">Start Playing</button></span>
+</div></div>
 
 <!-- result + unlock overlays -->
 <div class="result" id="result"><div id="resultInner"></div></div>
@@ -183,7 +201,12 @@ function renderNameBar(){
   else{el.className='namebar';el.innerHTML='<input id="nameIn" placeholder="Your name for the leaderboard" maxlength="24"/><button class="join" onclick="saveName()">Join</button>';}
 }
 function saveName(){const i=document.getElementById('nameIn');const v=i?i.value.trim():'';if(!v)return;setNm(v);renderNameBar();postScore();}
-function editName(){setNm('');renderNameBar();}
+function editName(){setNm('');renderNameBar();showNameGate();}
+function showNameGate(){const g=document.getElementById('namegate');g.classList.add('show');
+  const i=document.getElementById('ngInput');if(i){i.value=getName();setTimeout(()=>i.focus(),60);
+    i.onkeydown=function(e){if(e.key==='Enter')saveNameGate();};}}
+function saveNameGate(){const i=document.getElementById('ngInput');const v=i?i.value.trim():'';if(!v){if(i)i.focus();return;}
+  setNm(v);document.getElementById('namegate').classList.remove('show');renderNameBar();postScore();}
 function postScore(){if(!isLB())return;const n=getName();if(!n)return;
   try{fetch(LB_URL.replace(/\/$/,'')+'/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,score:score})});}catch(e){}}
 function openLB(){if(!isLB()){showToast('The leaderboard turns on once the host links it.');return;}
@@ -333,6 +356,7 @@ function showUnlock(msg,openId){
 }
 
 load();renderMain();checkJigsawReturn();
+if(!getName())showNameGate();
 </script>
 </body>
 </html>
