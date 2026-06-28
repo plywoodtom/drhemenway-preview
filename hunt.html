@@ -141,7 +141,6 @@ footer{margin-top:24px;}
   </div>
   <div class="qgrid" id="qgrid"></div>
   <span class="btn-ghost-frame oct-8" style="margin-top:14px"><button class="btn-ghost oct-8" onclick="openLB()">View Leaderboard</button></span>
-  <div class="barrow"><button class="minireset" onclick="resetGame()">Reset my game</button></div>
   <footer>Dr. Merritt Hemenway's 80th &amp; Retirement · Time Bandit Entertainment</footer>
 </section>
 
@@ -434,7 +433,21 @@ function sendPhoto(){if(!camData)return;
   postPhotoTry(who,cap,camData,3).then(ok=>{ if(ok){closeCam();showToast('Added to the album!');}
     else{showToast('Still no luck - check the wifi and tap Add to Album again.');} });}
 
-load();renderMain();checkJigsawReturn();
+function shuffleArr(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function applyShuffle(){
+  let saved={};try{saved=JSON.parse(localStorage.getItem('tb_hunt_perm')||'{}');}catch(e){}
+  let changed=false;
+  Q.forEach(q=>{
+    if((q.type!=='choice'&&q.type!=='select')||q._shuffled)return;
+    let perm=saved[q.id];
+    if(!perm||perm.length!==q.options.length){perm=shuffleArr([...Array(q.options.length).keys()]);saved[q.id]=perm;changed=true;}
+    q.options=perm.map(i=>q.options[i]);
+    q.ans=(q.type==='choice')?perm.indexOf(q.ans):q.ans.map(a=>perm.indexOf(a));
+    q._shuffled=true;
+  });
+  if(changed){try{localStorage.setItem('tb_hunt_perm',JSON.stringify(saved));}catch(e){}}
+}
+load();applyShuffle();renderMain();checkJigsawReturn();
 if(!getName())showNameGate();
 </script>
 </body>

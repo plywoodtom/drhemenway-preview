@@ -64,6 +64,13 @@ export default {
       const raw = await env.LB.get("photoindex");
       return new Response(raw || "[]", { headers: { ...cors, "Content-Type": "application/json" } });
     }
+    // admin: overwrite the photo index (to fix captions / remove bad frames). key-guarded.
+    if (url.pathname === "/setindex" && req.method === "POST" && url.searchParams.get("key") === "hemenway80") {
+      let body; try { body = await req.json(); } catch (e) { return new Response("bad", { status: 400, headers: cors }); }
+      if (!Array.isArray(body)) return new Response("need array", { status: 400, headers: cors });
+      await env.LB.put("photoindex", JSON.stringify(body));
+      return J({ ok: true, count: body.length });
+    }
     if (url.pathname === "/photo" && req.method === "GET") {
       const id = url.searchParams.get("id");
       const dataUrl = await env.LB.get("photo:" + id);
