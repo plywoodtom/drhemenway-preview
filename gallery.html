@@ -23,7 +23,11 @@
 .lb .lcap .ct{color:#fff;font-size:1.2rem;font-weight:700;}
 .lb .lcap .nm{color:var(--red-light);font-size:.9rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;margin-top:5px;}
 .lb .x{position:fixed;top:14px;right:16px;color:#fff;font-size:1.6rem;font-weight:800;background:rgba(0,0,0,.4);border:1px solid var(--border);
-  width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:82;}
+.lb .nav{position:fixed;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,.45);border:1px solid var(--border);
+  color:#fff;font-size:1.9rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:81;user-select:none;}
+.lb .nav.prev{left:10px;}.lb .nav.next{right:10px;}
+.lb .hint{position:fixed;bottom:10px;left:0;right:0;text-align:center;color:var(--text-muted);font-size:.72rem;}
 .reffrow{display:flex;justify-content:center;margin-bottom:12px;}
 </style>
 </head>
@@ -46,8 +50,11 @@
 
 <div class="lb" id="lb">
   <div class="x" onclick="closeLb()">&times;</div>
+  <div class="nav prev" onclick="prevLb(event)">&lsaquo;</div>
+  <div class="nav next" onclick="nextLb(event)">&rsaquo;</div>
   <img id="lbImg" alt="" />
   <div class="lcap" id="lbCap"></div>
+  <div class="hint">Swipe, or tap the arrows, to browse</div>
 </div>
 
 <script src="assets/tb.js"></script>
@@ -68,14 +75,24 @@ function loadGrid(manual){
     if(manual)showToast('Updated - '+photos.length+' photos');
   }).catch(e=>{document.getElementById('count').textContent='Could not load - tap Refresh.';});
 }
-function openLb(i){const p=photos[i];if(!p)return;
+let lbIndex=-1;
+function showLb(){const p=photos[lbIndex];if(!p)return;
   document.getElementById('lbImg').src=imgUrl(p.id);
-  document.getElementById('lbCap').innerHTML=(p.caption?'<div class="ct">'+esc(p.caption)+'</div>':'')+(p.name?'<div class="nm">'+esc(p.name)+'</div>':'');
-  document.getElementById('lb').classList.add('show');}
+  document.getElementById('lbCap').innerHTML=(p.caption?'<div class="ct">'+esc(p.caption)+'</div>':'')+(p.name?'<div class="nm">'+esc(p.name)+'</div>':'');}
+function openLb(i){if(!photos[i])return;lbIndex=i;showLb();document.getElementById('lb').classList.add('show');}
 function closeLb(){document.getElementById('lb').classList.remove('show');document.getElementById('lbImg').src='';}
-document.getElementById('lb').addEventListener('click',function(e){if(e.target.id==='lb')closeLb();});
+function nextLb(e){if(e)e.stopPropagation();if(!photos.length)return;lbIndex=(lbIndex+1)%photos.length;showLb();}
+function prevLb(e){if(e)e.stopPropagation();if(!photos.length)return;lbIndex=(lbIndex-1+photos.length)%photos.length;showLb();}
+const lbEl=document.getElementById('lb');
+lbEl.addEventListener('click',function(e){if(e.target.id==='lb')closeLb();});
+document.addEventListener('keydown',function(e){if(!lbEl.classList.contains('show'))return;
+  if(e.key==='ArrowRight')nextLb();else if(e.key==='ArrowLeft')prevLb();else if(e.key==='Escape')closeLb();});
+let tsx=0,tsy=0;
+lbEl.addEventListener('touchstart',function(e){tsx=e.changedTouches[0].clientX;tsy=e.changedTouches[0].clientY;},{passive:true});
+lbEl.addEventListener('touchend',function(e){const dx=e.changedTouches[0].clientX-tsx,dy=e.changedTouches[0].clientY-tsy;
+  if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)){if(dx<0)nextLb();else prevLb();}},{passive:true});
 loadGrid();
-setInterval(()=>loadGrid(false),30000);
+setInterval(function(){if(!lbEl.classList.contains('show'))loadGrid(false);},30000);
 </script>
 </body>
 </html>
