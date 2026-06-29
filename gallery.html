@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Dr. Hemenway's 80th — Photo Album</title>
+<link rel="stylesheet" href="assets/tb.css" />
+<style>
+.count{text-align:center;font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);font-weight:700;margin:2px 0 10px;}
+.count b{color:var(--red-light);}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:6px;}
+.cell{position:relative;aspect-ratio:1;background:var(--bg3);cursor:pointer;overflow:hidden;
+  clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);}
+.cell img{width:100%;height:100%;object-fit:cover;display:block;}
+.cell .cc{position:absolute;left:0;right:0;bottom:0;font-size:.6rem;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.78));
+  padding:10px 6px 5px;text-align:center;font-weight:600;line-height:1.15;}
+.empty{text-align:center;color:var(--text-dim);padding:40px 20px;font-size:1.05rem;}
+/* lightbox */
+.lb{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(8,9,12,.96);padding:14px;flex-direction:column;}
+.lb.show{display:flex;}
+.lb img{max-width:100%;max-height:82vh;object-fit:contain;}
+.lb .lcap{margin-top:12px;text-align:center;max-width:34ch;}
+.lb .lcap .ct{color:#fff;font-size:1.2rem;font-weight:700;}
+.lb .lcap .nm{color:var(--red-light);font-size:.9rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;margin-top:5px;}
+.lb .x{position:fixed;top:14px;right:16px;color:#fff;font-size:1.6rem;font-weight:800;background:rgba(0,0,0,.4);border:1px solid var(--border);
+  width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.reffrow{display:flex;justify-content:center;margin-bottom:12px;}
+</style>
+</head>
+<body>
+<div class="toprow">
+  <span class="brandmini">Time Bandit Entertainment</span>
+  <span class="theme-toggle oct-8" onclick="toggleTheme()"><button class="inner oct-8" id="themeBtn">Daylight</button></span>
+</div>
+<header class="hdr">
+  <img class="charL" src="assets/adventurer.png" alt="Time Bandit adventurer" />
+  <div class="htitle"><div class="kicker">Photo Album</div>
+    <h1>Dr. Hemenway's <span class="age">80th</span></h1></div>
+  <img class="charR" src="assets/girl.png" alt="Adventurer" />
+</header>
+<div class="count" id="count">Loading photos...</div>
+<div class="reffrow"><span class="btn-ghost-frame oct-8" style="width:auto;margin:0"><button class="btn-ghost oct-8" onclick="loadGrid(true)" style="padding:9px 22px">Refresh</button></span></div>
+<div class="grid" id="grid"></div>
+<div class="empty" id="empty" style="display:none">No photos yet - check back soon!</div>
+<footer>Dr. Merritt Hemenway's 80th &amp; Retirement · Time Bandit Entertainment</footer>
+
+<div class="lb" id="lb">
+  <div class="x" onclick="closeLb()">&times;</div>
+  <img id="lbImg" alt="" />
+  <div class="lcap" id="lbCap"></div>
+</div>
+
+<script src="assets/tb.js"></script>
+<script>
+const LB_URL="https://hemenway-leaderboard.plywoodtom.workers.dev";
+let photos=[];
+function imgUrl(id){return LB_URL+'/photo?id='+encodeURIComponent(id);}
+function esc(s){return(s+'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function loadGrid(manual){
+  fetch(LB_URL+'/photos').then(r=>r.json()).then(list=>{
+    photos=list.slice().reverse(); // newest first
+    document.getElementById('count').innerHTML='<b>'+photos.length+'</b> photos';
+    const g=document.getElementById('grid');
+    document.getElementById('empty').style.display=photos.length?'none':'block';
+    g.innerHTML=photos.map((p,i)=>'<div class="cell" onclick="openLb('+i+')">'
+      +'<img loading="lazy" src="'+imgUrl(p.id)+'" alt="" />'
+      +(p.caption?'<div class="cc">'+esc(p.caption)+'</div>':'')+'</div>').join('');
+    if(manual)showToast('Updated - '+photos.length+' photos');
+  }).catch(e=>{document.getElementById('count').textContent='Could not load - tap Refresh.';});
+}
+function openLb(i){const p=photos[i];if(!p)return;
+  document.getElementById('lbImg').src=imgUrl(p.id);
+  document.getElementById('lbCap').innerHTML=(p.caption?'<div class="ct">'+esc(p.caption)+'</div>':'')+(p.name?'<div class="nm">'+esc(p.name)+'</div>':'');
+  document.getElementById('lb').classList.add('show');}
+function closeLb(){document.getElementById('lb').classList.remove('show');document.getElementById('lbImg').src='';}
+document.getElementById('lb').addEventListener('click',function(e){if(e.target.id==='lb')closeLb();});
+loadGrid();
+setInterval(()=>loadGrid(false),30000);
+</script>
+</body>
+</html>
